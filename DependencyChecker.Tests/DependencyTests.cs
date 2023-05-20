@@ -9,6 +9,8 @@ public class DependencyTests
     [Test]
     public void ValidateDependencies()
     {
-        AspNetDependenciesValidator.Validate<IApiMarker>();
+        var result = AspNetDependenciesValidator.Validate<WeatherForecast>(validateServiceCollection: true);
+        Console.WriteLine(result.Message);
+        Assert.That(result.IsValid, Is.True);
     }
 }

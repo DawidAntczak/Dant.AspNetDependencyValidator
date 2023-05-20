@@ -7,8 +7,6 @@ namespace DependencyChecker.App.Controllers;
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
-   
-
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IDiagnostics _diagnostics;
 

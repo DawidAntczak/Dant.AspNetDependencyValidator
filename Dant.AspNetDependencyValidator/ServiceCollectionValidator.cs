@@ -5,11 +5,13 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 #if NETCOREAPP3_1_OR_GREATER
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using Microsoft.AspNetCore.Mvc.Razor;
 #endif
@@ -21,8 +23,9 @@ namespace Dant.AspNetDependencyValidator
         public bool IsValid => FailedValidations.All(x => x.Severity != Severity.Error);
         public HashSet<FailedValidation> FailedValidations { get; set; } = new HashSet<FailedValidation>();
 
+        private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
         // Ignore the scope check for some Microsoft implementations, they are registered as Transient, but are used in Singleton services
-        private readonly IEnumerable<Type> _ignoreForScopeValidation = new List<Type>()
+        private readonly IEnumerable<Type> _ignoredForScopeValidation = new List<Type>()
         {
             typeof(IOptionsFactory<>),
             typeof(ICompositeMetadataDetailsProvider),
@@ -34,71 +37,78 @@ namespace Dant.AspNetDependencyValidator
             #endif
         };
 
-        // Controllers are created as transient services
-        private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
-
-        private readonly IList<ServiceDescriptor> _services;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IEnumerable<ServiceDescriptor> _registeredServices;
         private readonly HashSet<ServiceDescriptor> _validatedServices = new HashSet<ServiceDescriptor>();
 
         public ServiceCollectionValidator(IServiceCollection serviceCollection)
         {
-            _services = serviceCollection.ToList();
+            _serviceProvider = serviceCollection.BuildServiceProvider();
+            _registeredServices = serviceCollection.ToList();
         }
 
         public void ValidateServiceCollection()
         {
-            foreach (var service in _services)
+            foreach (var service in _registeredServices)
             {
-                ValidateServiceInternal(service);
+                ValidateServiceInternal(Enumerable.Empty<Type>(), service);
             }
         }
 
         public void ValidateControllers(Assembly assembly)
         {
-            var baseControllers = assembly.GetTypes().Where(x => (typeof(ControllerBase)).IsAssignableFrom(x));
+            var controllers = assembly.GetTypes().Where(x => (typeof(ControllerBase)).IsAssignableFrom(x));
 
-            foreach (var baseController in baseControllers)
+            foreach (var controller in controllers)
             {
-                ValidateController(baseController);
-
-                ValidateControllerEndpoints(baseController);
+                ValidateServiceInternal(new Type[] { controller }, new ServiceDescriptor(controller, controller, _controllerLifetime));
+                ValidateEndpoints(controller);
             }
         }
 
-        private void ValidateServiceInternal(ServiceDescriptor service)
+        public void ValidatePages(Assembly assembly)
         {
-            if (_validatedServices.Contains(service))
+            var pages = assembly.GetTypes().Where(x => (typeof(PageModel)).IsAssignableFrom(x));
+
+            foreach (var page in pages)
+            {
+                ValidateServiceInternal(new Type[] { page }, new ServiceDescriptor(page, page, _controllerLifetime));
+                ValidateEndpoints(page);
+            }
+        }
+
+        private void ValidateServiceInternal(IEnumerable<Type> parents, ServiceDescriptor service)
+        {
+            if (!_validatedServices.Add(service))
                 return;
-            _validatedServices.Add(service);
 
-            var serviceType = service.ServiceType;
-            var implementation = service.ImplementationType;
-            var lifetime = service.Lifetime;
+            if (!service.ServiceType.IsPublic)
+                return;
 
-            if (implementation is null)
+            if (service.ImplementationType is null)
             {
                 // If we have an instance or a factory then we consider this successfully resolved - even though it might not be true in case of implementation factory
+                // TODO deeper checks
                 if (service.ImplementationInstance != null || service.ImplementationFactory != null)
                     return;
 
-                FailedValidations.Add(new FailedValidation(Severity.Error, serviceType, "Service is registered but does not have implementation of any kind."));
+                FailedValidations.Add(new FailedValidation(Severity.Error, service.ServiceType, "Service is registered but does not have implementation of any kind."));
                 return;
             }
 
-            var constructors = implementation.GetConstructors();
+            var constructors = service.ImplementationType.GetConstructors();
 
             // Get the constructor with the ActivatorUtilitiesConstructor attribute, which is used by the DI to find the correct constructor in case of multiple 
             // constructors. For some reason, some of the Microsoft implementations have multiple constructors, mostly extended with ILogger<> parameter. I'm not 
-            // sure how DI knows which one to use, but I assume it tries the one by one, starting with the one with most arguments, until it succeeds resolving all 
-            // elements. 
+            // sure how DI knows which one to use, but I assume it tries the one by one, starting with the one with most arguments, until it succeeds resolving all elements. 
             // I just grab the first one and consider it good enough, but it might require better implementation in the future. 
             var constructor = constructors.SingleOrDefault(x =>
                     x?.GetCustomAttribute<ActivatorUtilitiesConstructorAttribute>() != null) ?? constructors.FirstOrDefault();
 
             if (constructor is null)
             {
-                FailedValidations.Add(new FailedValidation(Severity.Warning, serviceType,
-                    $"Service implementation {implementation.Name} does not have valid constructors."));
+                FailedValidations.Add(new FailedValidation(Severity.Warning, service.ServiceType,
+                    $"Service implementation {service.ImplementationType.Name} does not have valid constructors."));
                 return;
             }
 
@@ -106,18 +116,27 @@ namespace Dant.AspNetDependencyValidator
 
             foreach (var parameterInfo in parameters)
             {
-                ValidateChildService(parameterInfo.ParameterType, lifetime);
+                ValidateChildService(parents.Append(service.ServiceType), parameterInfo.ParameterType, service.Lifetime);
             }
         }
 
-        private void ValidateChildService(Type serviceType, ServiceLifetime parentLifetime, Type explicitImplementationType = null,
+        private void ValidateChildService(IEnumerable<Type> parents, Type serviceType, ServiceLifetime parentLifetime, Type explicitImplementationType = null,
             ServiceLifetime? explicitServiceLifetime = null)
         {
             // This one is, of course, resolvable even though it does not exist in the serviceCollection list.
             if (serviceType == typeof(IServiceProvider))
                 return;
 
-            var matches = _services.Where(
+            if (serviceType.Namespace == "Microsoft.Extensions.DependencyInjection")
+                return;
+
+#if NETCOREAPP3_1_OR_GREATER
+            // https://stackoverflow.com/questions/58118280/iactioncontextaccessor-is-null
+                if (serviceType == typeof(IActionContextAccessor))
+                    return;
+#endif
+
+            var matches = _registeredServices.Where(
                 x => x.ServiceType == serviceType || (serviceType.IsGenericType && x.ServiceType == serviceType.GetGenericTypeDefinition())).ToList();
 
             if (!matches.Any())
@@ -125,10 +144,12 @@ namespace Dant.AspNetDependencyValidator
                 if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 {
                     // IEnumerable<> dependencies are valid to resolve to empty enumerable
+                    // TODO maybe warn?
                     return;
                 }
 
-                FailedValidations.Add(new FailedValidation(Severity.Error, serviceType, $"Failed to resolve {serviceType}."));
+                FailedValidations.Add(new FailedValidation(Severity.Error, serviceType, $"Failed to resolve {serviceType} needed to create {string.Join(" <- ", parents.Reverse())}"));
+
                 return;
             }
 
@@ -145,7 +166,7 @@ namespace Dant.AspNetDependencyValidator
             foreach (var match in matches)
             {
                 ValidateServiceLifetime(match.ServiceType, parentLifetime, match.Lifetime);
-                ValidateServiceInternal(match);
+                ValidateServiceInternal(parents.Append(match.ServiceType), match);
 
                 if (explicitServiceLifetime != null && match.Lifetime != explicitServiceLifetime)
                 {
@@ -160,7 +181,7 @@ namespace Dant.AspNetDependencyValidator
             // Never inject Scoped & Transient services into Singleton service.
             // Never inject Transient services into scoped service
             // Ignore certain microsoft implementations.
-            if (_ignoreForScopeValidation.Contains(serviceType))
+            if (_ignoredForScopeValidation.Contains(serviceType))
                 return;
 
             switch (parent)
@@ -173,29 +194,18 @@ namespace Dant.AspNetDependencyValidator
             }
         }
 
-        private void ValidateController(Type controller)
-        {
-            // We can reuse ValidateServiceInternal nicely
-            ValidateServiceInternal(new ServiceDescriptor(controller, controller, _controllerLifetime));
-        }
-
-        private void ValidateControllerEndpoints(Type controller)
+        private void ValidateEndpoints(Type controller)
         {
             var endpointMethods = controller.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.GetCustomAttributes<HttpMethodAttribute>().Any());
 
-            foreach (var endpointMethod in endpointMethods)
-            {
-                var serviceParameters = endpointMethod.GetParameters()
-                    .Where(x => x.GetCustomAttributes<FromServicesAttribute>().Any());
+            var fromServiceParameters = endpointMethods.SelectMany(x => x.GetParameters())
+                .Where(x => x.GetCustomAttributes<FromServicesAttribute>().Any());
 
-                foreach (var parameterInfo in serviceParameters)
-                {
-                    ValidateChildService(parameterInfo.ParameterType, _controllerLifetime);
-                }
+            foreach (var parameterInfo in fromServiceParameters)
+            {
+                ValidateChildService(new Type[] { controller }, parameterInfo.ParameterType, _controllerLifetime);
             }
         }
     }
 }
-
-
