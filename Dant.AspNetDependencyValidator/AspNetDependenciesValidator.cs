@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Dant.AspNetDependencyValidator
 {
@@ -17,21 +19,30 @@ namespace Dant.AspNetDependencyValidator
         {
             ValidationResult validationResult = null;
             using (var app = new WebApplicationFactory<TEntryPoint>()
-                .WithWebHostBuilder(builder => builder.ConfigureTestServices(serviceCollection =>
-                {
-                    var dependencyValidator = new ServiceCollectionValidator(serviceCollection);
-
-                    // Validate entire collection (but this does not validate controllers)
-                    if (validateServiceCollection)
+                .WithWebHostBuilder(builder => {
+                    builder.ConfigureTestServices(serviceCollection =>
                     {
-                        dependencyValidator.ValidateServiceCollection();
-                    }
+                        var dependencyValidator = new ServiceCollectionValidator(serviceCollection);
 
-                    dependencyValidator.ValidateControllers(typeof(TEntryPoint).Assembly);
-                    dependencyValidator.ValidatePages(typeof(TEntryPoint).Assembly);
+                        // Validate entire collection (but this does not validate controllers)
+                        if (validateServiceCollection)
+                        {
+                            dependencyValidator.ValidateServiceCollection();
+                        }
 
-                    validationResult = new ValidationResult(dependencyValidator.FailedValidations);
-                })))
+                        dependencyValidator.ValidateControllers(typeof(TEntryPoint).Assembly);
+                        dependencyValidator.ValidatePages(typeof(TEntryPoint).Assembly);
+
+                        validationResult = new ValidationResult(dependencyValidator.FailedValidations);
+                    });
+                    /*builder.UseDefaultServiceProvider(options =>
+                    {
+                        options.ValidateScopes = false;
+#if NETCOREAPP3_1_OR_GREATER
+                        options.ValidateOnBuild = false;
+#endif
+                    });*/
+                }))
             {
                 app.CreateClient().Dispose();
             }

@@ -34,11 +34,13 @@ public class WeatherService : IWeatherService
 {
     private readonly ISystemClock _systemClock;
     private readonly ILogger<WeatherService> _logger;
+    private readonly IServiceProvider serviceProvider;
 
-    public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger)
+    public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger, IServiceProvider provider)
     {
         _systemClock = systemClock;
         _logger = logger;
+        serviceProvider = provider;
     }
 
     private static readonly string[] Summaries = new[]
@@ -48,6 +50,8 @@ public class WeatherService : IWeatherService
 
     public IEnumerable<WeatherForecast> Get()
     {
+        serviceProvider.GetService<ISystemClock>();
+
         Console.WriteLine(_systemClock.UtcNow);
 
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast
