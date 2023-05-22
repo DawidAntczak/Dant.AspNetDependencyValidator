@@ -18,9 +18,11 @@ namespace Dant.AspNetDependencyValidator
         private string BuildMessage(IEnumerable<FailedValidation> failedValidations)
         {
             var sb = new StringBuilder();
-            foreach (var failedValidation in failedValidations)
+            foreach (var failedValidation in failedValidations.OrderByDescending(v => v.Severity))
             {
-                sb.AppendLine($"{failedValidation.Severity}: {failedValidation.Message}");
+                sb.Append(failedValidation.Severity)
+                    .Append(": ")
+                    .AppendLine(failedValidation.Message);
             }
             return sb.ToString();
         }

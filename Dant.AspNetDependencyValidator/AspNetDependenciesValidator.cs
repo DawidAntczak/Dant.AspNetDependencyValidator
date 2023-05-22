@@ -27,8 +27,6 @@ namespace Dant.AspNetDependencyValidator
                         dependencyValidator.ValidateServiceCollection();
                     }
 
-                    // Scan an assembly and validate all controllers, both the constructor injected dependencies and dependencies injected into endpoints 
-                    // marked with FromService attribute
                     dependencyValidator.ValidateControllers(typeof(TEntryPoint).Assembly);
                     dependencyValidator.ValidatePages(typeof(TEntryPoint).Assembly);
 

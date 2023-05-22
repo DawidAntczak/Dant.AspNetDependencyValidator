@@ -5,7 +5,6 @@ using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Authorization;
@@ -25,16 +24,17 @@ namespace Dant.AspNetDependencyValidator
 
         private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
         // Ignore the scope check for some Microsoft implementations, they are registered as Transient, but are used in Singleton services
+        // TODO maybe just ignore all Microsoft.* services?
         private readonly IEnumerable<Type> _ignoredForScopeValidation = new List<Type>()
         {
             typeof(IOptionsFactory<>),
             typeof(ICompositeMetadataDetailsProvider),
             typeof(IControllerActivator),
             typeof(IAuthorizationPolicyProvider),
-            #if NETCOREAPP3_1_OR_GREATER
+#if NETCOREAPP3_1_OR_GREATER
             typeof(IViewComponentDescriptorProvider),
             typeof(IRazorPageFactoryProvider)
-            #endif
+#endif
         };
 
         private readonly IServiceProvider _serviceProvider;
@@ -68,7 +68,8 @@ namespace Dant.AspNetDependencyValidator
 
         public void ValidatePages(Assembly assembly)
         {
-            var pages = assembly.GetTypes().Where(x => (typeof(PageModel)).IsAssignableFrom(x));
+            var basePageClass = Type.GetType("Microsoft.AspNetCore.Mvc.RazorPages.PageModel, Microsoft.AspNetCore.Mvc.RazorPages");
+            var pages = assembly.GetTypes().Where(x => basePageClass.IsAssignableFrom(x));
 
             foreach (var page in pages)
             {
@@ -82,7 +83,8 @@ namespace Dant.AspNetDependencyValidator
             if (!_validatedServices.Add(service))
                 return;
 
-            if (!service.ServiceType.IsPublic)
+            // TODO idk why but it can't be resolved
+            if (service.ServiceType.ToString() == "Microsoft.AspNetCore.SignalR.Internal.HubDispatcher`1[THub]")
                 return;
 
             if (service.ImplementationType is null)
@@ -120,20 +122,22 @@ namespace Dant.AspNetDependencyValidator
             }
         }
 
-        private void ValidateChildService(IEnumerable<Type> parents, Type serviceType, ServiceLifetime parentLifetime, Type explicitImplementationType = null,
-            ServiceLifetime? explicitServiceLifetime = null)
+        private void ValidateChildService(IEnumerable<Type> parents, Type serviceType, ServiceLifetime parentLifetime,
+            Type explicitImplementationType = null, ServiceLifetime? explicitServiceLifetime = null)
         {
             // This one is, of course, resolvable even though it does not exist in the serviceCollection list.
-            if (serviceType == typeof(IServiceProvider))
+            if (serviceType == typeof(IServiceProvider) || serviceType == typeof(IServiceScopeFactory))
                 return;
 
-            if (serviceType.Namespace == "Microsoft.Extensions.DependencyInjection")
+#if NET6_0_OR_GREATER
+            if (serviceType == typeof(IServiceProviderIsService))
                 return;
+#endif
 
 #if NETCOREAPP3_1_OR_GREATER
             // https://stackoverflow.com/questions/58118280/iactioncontextaccessor-is-null
-                if (serviceType == typeof(IActionContextAccessor))
-                    return;
+            if (serviceType == typeof(IActionContextAccessor))
+                return;
 #endif
 
             var matches = _registeredServices.Where(
@@ -165,7 +169,7 @@ namespace Dant.AspNetDependencyValidator
 
             foreach (var match in matches)
             {
-                ValidateServiceLifetime(match.ServiceType, parentLifetime, match.Lifetime);
+                ValidateServiceLifetime(match.ServiceType, parents.Last(), parentLifetime, match.Lifetime);
                 ValidateServiceInternal(parents.Append(match.ServiceType), match);
 
                 if (explicitServiceLifetime != null && match.Lifetime != explicitServiceLifetime)
@@ -176,7 +180,7 @@ namespace Dant.AspNetDependencyValidator
             }
         }
 
-        private void ValidateServiceLifetime(Type serviceType, ServiceLifetime parent, ServiceLifetime child)
+        private void ValidateServiceLifetime(Type serviceType, Type parentType, ServiceLifetime parentLifetime, ServiceLifetime child)
         {
             // Never inject Scoped & Transient services into Singleton service.
             // Never inject Transient services into scoped service
@@ -184,12 +188,12 @@ namespace Dant.AspNetDependencyValidator
             if (_ignoredForScopeValidation.Contains(serviceType))
                 return;
 
-            switch (parent)
+            switch (parentLifetime)
             {
                 case ServiceLifetime.Singleton when child is ServiceLifetime.Scoped || child is ServiceLifetime.Transient:
                 case ServiceLifetime.Scoped when child is ServiceLifetime.Transient:
                     FailedValidations.Add(new FailedValidation(Severity.Warning, serviceType,
-                        $"Service {serviceType} is implemented with {child:G} service lifetime, but the parent has {parent:G} service lifetime."));
+                        $"Service {serviceType} is implemented with {child} service lifetime, but the parent ({parentType}) has {parentLifetime} service lifetime."));
                     break;
             }
         }
