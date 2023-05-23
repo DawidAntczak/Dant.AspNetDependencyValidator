@@ -36,11 +36,10 @@ public class WeatherService : IWeatherService
     private readonly ILogger<WeatherService> _logger;
     private readonly IServiceProvider serviceProvider;
 
-    public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger, IServiceProvider provider)
+    public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger, IServiceProvider provider, IEndpointAddressScheme<IEndpointFilter> eee)
     {
-        //provider.GetRequiredService<ILogger<WeatherService>>();
-        var dupa = () => provider.GetRequiredService<ILogger<WeatherService>>();
-        dupa();
+        var lambda = () => provider.GetRequiredService<ILogger<WeatherService>>();
+        lambda();
         provider.GetService(typeof(ISystemClock));
         _systemClock = systemClock;
         _logger = logger;

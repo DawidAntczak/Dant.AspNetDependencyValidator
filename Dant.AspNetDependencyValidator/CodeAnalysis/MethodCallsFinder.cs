@@ -1,27 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Dant.AspNetDependencyValidator.SourceAnalysis
+namespace Dant.AspNetDependencyValidator.CodeAnalysis
 {
-    public static class CallsFinder
+    public class MethodCallsFinder : IDisposable
     {
-        public static IEnumerable<IEnumerable<MethodDefinition>> FindCallsToGetService<TEntryPoint>(int maxDepth = 5)
+        private readonly AssemblyDefinition _assembly;
+
+        public MethodCallsFinder(string assemblyLocation)
         {
-            var assembly = AssemblyDefinition.ReadAssembly(typeof(TEntryPoint).Assembly.Location);
+            _assembly = AssemblyDefinition.ReadAssembly(assemblyLocation);
+        }
 
-            // Get the method reference
-            var methodToBeFound = typeof(IServiceProvider).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                .Single(m => m.Name.Contains("GetService"));
-            var methodToBeFoundRef = assembly.MainModule.ImportReference(methodToBeFound);
+        public void Dispose()
+        {
+            _assembly.Dispose();
+        }
 
-            //var extensionMethods = typeof(ServiceProviderServiceExtensions).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            //var methods = extensionMethods.Append(directMethod);
+        public IEnumerable<IEnumerable<MethodDefinition>> FindCallRoutesTo(MethodInfo methodToFind, int maxDepth = 5)
+        {
+            var methodToBeFoundRef = _assembly.MainModule.ImportReference(methodToFind);
 
-            // Types property doesn't include lambdas so use GetTypes() instead
-            var allAssemblyMethods = assembly.MainModule.GetTypes().SelectMany(t => t.Methods);
+            // Types property doesn't include lambdas so use GetTypes() instead but GetMethods() returns less than Methods property
+            var allAssemblyMethods = _assembly.MainModule.GetTypes().SelectMany(t => t.Methods);
 
             // Find calls to the method
             var callsStacksToMethod = new List<List<MethodDefinition>>();
@@ -35,7 +40,7 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
         }
 
         // Helper method to find calls to a given method in an assembly
-        static List<List<MethodDefinition>> FindCallsToMethod(MethodReference methodToFind, IEnumerable<MethodDefinition> callStack, int maxDepth)
+        private List<List<MethodDefinition>> FindCallsToMethod(MethodReference methodToFind, IEnumerable<MethodDefinition> callStack, int maxDepth)
         {
             var methodToSearch = callStack.Last();
             if (callStack.Count() > maxDepth || !methodToSearch.HasBody)
@@ -54,6 +59,7 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
                         result.Add(callStack.Append(calledMethod.Resolve()).ToList());
                     }
                     var resolvedCalledMethod = calledMethod.Resolve();
+                    // TODO rethink if this check has no holes - but some checks need to be done to avoid long time running
                     if (resolvedCalledMethod.Parameters.Select(p => p.ParameterType.FullName).Contains(typeof(IServiceProvider).FullName))
                     {
                         result.AddRange(FindCallsToMethod(methodToFind, callStack.Append(calledMethod.Resolve()), maxDepth));

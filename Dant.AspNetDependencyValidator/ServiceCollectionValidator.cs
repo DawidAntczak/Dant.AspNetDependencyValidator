@@ -78,6 +78,15 @@ namespace Dant.AspNetDependencyValidator
             }
         }
 
+        public void ValidateServices(IEnumerable<Type> types)
+        {
+            foreach (var type in types)
+            {
+                //_validatedServices.RemoveWhere(x => x.ServiceType == type); no need for it
+                ValidateChildService(new List<Type>(), type, ServiceLifetime.Transient);
+            }
+        }
+
         private void ValidateServiceInternal(IEnumerable<Type> parents, ServiceDescriptor service)
         {
             if (!_validatedServices.Add(service))
@@ -152,7 +161,7 @@ namespace Dant.AspNetDependencyValidator
                     return;
                 }
 
-                FailedValidations.Add(new FailedValidation(Severity.Error, serviceType, $"Failed to resolve {serviceType} needed to create {string.Join(" <- ", parents.Reverse())}"));
+                FailedValidations.Add(new FailedValidation(Severity.Error, serviceType, $"Failed to resolve {serviceType}" + (parents.Any() ? $" needed to create {string.Join(" <- ", parents.Reverse())}" : "")));
 
                 return;
             }
@@ -169,7 +178,11 @@ namespace Dant.AspNetDependencyValidator
 
             foreach (var match in matches)
             {
-                ValidateServiceLifetime(match.ServiceType, parents.Last(), parentLifetime, match.Lifetime);
+                var parent = parents.LastOrDefault();
+                if (parent != null)
+                {
+                    ValidateServiceLifetime(match.ServiceType, parent, parentLifetime, match.Lifetime);
+                }
                 ValidateServiceInternal(parents.Append(match.ServiceType), match);
 
                 if (explicitServiceLifetime != null && match.Lifetime != explicitServiceLifetime)

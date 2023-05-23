@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +17,7 @@ namespace Dant.AspNetDependencyValidator
         /// <param name="validateServiceCollection">Informs if the in service collection as a whole should be validated.
         /// Default value of 'false' instructs to only validate recurrently the dependencies used by controllers.
         /// Disable if it causes problems because of many nuances which may not be validated correctly in the current version.</param>
-        public static ValidationResult Validate<TEntryPoint>(bool validateServiceCollection = false) where TEntryPoint : class
+        public static ValidationResult Validate<TEntryPoint>(IEnumerable<Type> additionalServicesToValidate = null, bool validateServiceCollection = false) where TEntryPoint : class
         {
             ValidationResult validationResult = null;
             using (var app = new WebApplicationFactory<TEntryPoint>()
@@ -32,6 +34,11 @@ namespace Dant.AspNetDependencyValidator
 
                         dependencyValidator.ValidateControllers(typeof(TEntryPoint).Assembly);
                         dependencyValidator.ValidatePages(typeof(TEntryPoint).Assembly);
+
+                        if (additionalServicesToValidate != null)
+                        {
+                            dependencyValidator.ValidateServices(additionalServicesToValidate);
+                        }
 
                         validationResult = new ValidationResult(dependencyValidator.FailedValidations);
                     });
