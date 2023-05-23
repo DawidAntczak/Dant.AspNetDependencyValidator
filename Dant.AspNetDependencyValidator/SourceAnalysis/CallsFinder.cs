@@ -8,9 +8,9 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
 {
     public static class CallsFinder
     {
-        public static IEnumerable<IEnumerable<MethodDefinition>> FindCallsToGetService(string pathToAssembly, int maxDepth = 5)
+        public static IEnumerable<IEnumerable<MethodDefinition>> FindCallsToGetService<TEntryPoint>(int maxDepth = 5)
         {
-            var assembly = AssemblyDefinition.ReadAssembly(pathToAssembly);
+            var assembly = AssemblyDefinition.ReadAssembly(typeof(TEntryPoint).Assembly.Location);
 
             // Get the method reference
             var methodToBeFound = typeof(IServiceProvider).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
