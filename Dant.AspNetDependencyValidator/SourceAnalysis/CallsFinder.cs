@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -9,7 +8,7 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
 {
     public static class CallsFinder
     {
-        public static IEnumerable<InvocationExpressionSyntax> FindCalls(string pathToAssembly)
+        public static IEnumerable<IEnumerable<MethodDefinition>> FindCallsToGetService(string pathToAssembly, int maxDepth = 5)
         {
             var assembly = AssemblyDefinition.ReadAssembly(pathToAssembly);
 
@@ -24,30 +23,24 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
             var allAssemblyMethods = assembly.MainModule.Types.SelectMany(t => t.Methods);
 
             // Find calls to the method
-            var callsToMethod = new List<MethodReference>();
+            var callsStacksToMethod = new List<List<MethodDefinition>>();
             foreach (var method in allAssemblyMethods)
             {
-                var calls = FindCallsToMethod(methodToBeFoundRef, new List<MethodDefinition> { method });
-                //Console.WriteLine($"Found {calls.Count} calls to {methodToBeFoundRef}");
-                callsToMethod.AddRange(calls);
+                var calls = FindCallsToMethod(methodToBeFoundRef, new List<MethodDefinition> { method }, maxDepth);
+                callsStacksToMethod.AddRange(calls);
             }
 
-            foreach (var call in callsToMethod)
-            {
-                Console.WriteLine($"- {call}");
-            }
-
-            return new List<InvocationExpressionSyntax>();
+            return callsStacksToMethod;
         }
 
         // Helper method to find calls to a given method in an assembly
-        static List<MethodReference> FindCallsToMethod(MethodReference methodToFind, IEnumerable<MethodDefinition> callStack)
+        static List<List<MethodDefinition>> FindCallsToMethod(MethodReference methodToFind, IEnumerable<MethodDefinition> callStack, int maxDepth)
         {
             var methodToSearch = callStack.Last();
-            if (callStack.Count() > 10 || !methodToSearch.HasBody)
-                return new List<MethodReference>();
+            if (callStack.Count() > maxDepth || !methodToSearch.HasBody)
+                return new List<List<MethodDefinition>>();
 
-            var result = new List<MethodReference>();
+            var result = new List<List<MethodDefinition>>();
 
             foreach (var instruction in methodToSearch.Body.Instructions)
             {
@@ -58,13 +51,12 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
                     if (calledMethod != null && calledMethod.FullName == methodToFind.FullName)
                     {
                         var parameter = instruction.Previous.Operand as ParameterReference;
-                        //result.Add(string.Join(" -> ", callStack.Select(x => $"{x.DeclaringType.FullName}.{x.Name}")));
-                        result.Add(calledMethod);
+                        result.Add(callStack.Append(calledMethod.Resolve()).ToList());
                     }
                     var resolvedCalledMethod = calledMethod.Resolve();
                     if (resolvedCalledMethod.Parameters.Select(p => p.ParameterType.FullName).Contains(typeof(IServiceProvider).FullName))
                     {
-                        result.AddRange(FindCallsToMethod(methodToFind, callStack.Append(calledMethod.Resolve())));
+                        result.AddRange(FindCallsToMethod(methodToFind, callStack.Append(calledMethod.Resolve()), maxDepth));
                     }
                 }
             }

@@ -18,10 +18,10 @@ public class DependencyTests
     [Test]
     public void T()
     {
-        foreach (var invocation in CallsFinder.FindCalls(@"C:\Repos\Dant.AspNetDependencyValidator\DependencyChecker\bin\Debug\net7.0\DependencyChecker.App.dll"))
+        foreach (var callStack in CallsFinder.FindCallsToGetService(@"C:\Repos\Dant.AspNetDependencyValidator\DependencyChecker\bin\Debug\net7.0\DependencyChecker.App.dll"))
         {
-            //typeof(WeatherForecast).Assembly
-            Console.WriteLine(invocation);
+            Console.WriteLine(string.Join($"{Environment.NewLine} -> ",
+                callStack.Select(x => $"{x.DeclaringType}.{x.Name}({string.Join(", ", x.Parameters.Select(p => $"{p.ParameterType} {p.Name}"))})")));
         }
     }
 }
