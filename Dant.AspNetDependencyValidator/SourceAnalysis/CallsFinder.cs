@@ -20,7 +20,8 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
             //var extensionMethods = typeof(ServiceProviderServiceExtensions).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
             //var methods = extensionMethods.Append(directMethod);
 
-            var allAssemblyMethods = assembly.MainModule.Types.SelectMany(t => t.Methods);
+            // Types property doesn't include lambdas so use GetTypes() instead
+            var allAssemblyMethods = assembly.MainModule.GetTypes().SelectMany(t => t.Methods);
 
             // Find calls to the method
             var callsStacksToMethod = new List<List<MethodDefinition>>();
@@ -50,7 +51,6 @@ namespace Dant.AspNetDependencyValidator.SourceAnalysis
 
                     if (calledMethod != null && calledMethod.FullName == methodToFind.FullName)
                     {
-                        var parameter = instruction.Previous.Operand as ParameterReference;
                         result.Add(callStack.Append(calledMethod.Resolve()).ToList());
                     }
                     var resolvedCalledMethod = calledMethod.Resolve();

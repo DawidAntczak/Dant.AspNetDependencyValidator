@@ -38,7 +38,9 @@ public class WeatherService : IWeatherService
 
     public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger, IServiceProvider provider)
     {
-        provider.GetRequiredService<ILogger<WeatherService>>();
+        //provider.GetRequiredService<ILogger<WeatherService>>();
+        var dupa = () => provider.GetRequiredService<ILogger<WeatherService>>();
+        dupa();
         provider.GetService(typeof(ISystemClock));
         _systemClock = systemClock;
         _logger = logger;

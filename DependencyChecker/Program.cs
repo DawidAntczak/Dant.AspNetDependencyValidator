@@ -10,8 +10,9 @@ builder.Services.AddLogging(options => options.ClearProviders());
 builder.Services.AddLogging(options => options.AddDebug());
 builder.Services.AddLogging(options => options.AddSimpleConsole());
 
-builder.Services.AddSingleton<ISystemClock, SystemClock>();
-builder.Services.AddScoped<IWeatherService, WeatherService>();
+//builder.Services.AddSingleton<ISystemClock, SystemClock>();
+builder.Services.AddScoped<IWeatherService>(provider => new WeatherService(
+    provider.GetRequiredService<ISystemClock>(), provider.GetRequiredService<ILogger<WeatherService>>(), provider.GetRequiredService<IServiceProvider>()));
 builder.Services.AddSingleton<IDiagnostics, ConsoleDiagnostics>();
 
 var app = builder.Build();
