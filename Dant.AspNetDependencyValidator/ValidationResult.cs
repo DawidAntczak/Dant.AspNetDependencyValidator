@@ -7,20 +7,21 @@ namespace Dant.AspNetDependencyValidator
     public class ValidationResult
     {
         public bool IsValid { get; }
-        public string Message { get; }
+        public IEnumerable<FailedValidation> FailedValidations { get; }
 
         internal ValidationResult(IEnumerable<FailedValidation> failedValidations)
         {
-            IsValid = failedValidations.All(x => x.Severity != Severity.Error);
-            Message = BuildMessage(failedValidations);
+            IsValid = failedValidations.All(x => x.FailureType != FailureType.MissingService);
+            FailedValidations = failedValidations;
         }
 
-        private string BuildMessage(IEnumerable<FailedValidation> failedValidations)
+        public override string ToString()
         {
             var sb = new StringBuilder();
-            foreach (var failedValidation in failedValidations.OrderByDescending(v => v.Severity))
+            sb.AppendLine($"IsValid: {IsValid}");
+            foreach (var failedValidation in FailedValidations.OrderByDescending(v => v.FailureType))
             {
-                sb.Append(failedValidation.Severity)
+                sb.Append(failedValidation.FailureType)
                     .Append(": ")
                     .AppendLine(failedValidation.Message);
             }

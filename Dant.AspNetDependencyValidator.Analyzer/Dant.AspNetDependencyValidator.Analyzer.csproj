@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dant.AspNetDependencyValidator" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.6.3" ExcludeAssets="Runtime" />
+    <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
+    <PackageReference Update="Dant.AspNetDependencyValidator" Version="0.1.6" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Version>0.1.0</Version>
+    <Title>Dant.AspNetDependencyValidator.Analyzer</Title>
+    <Authors>Dawid Antczak</Authors>
+    <Description>IServiceCollection validator which runs after compilation.</Description>
+    <Copyright>Copyright © Dawid Antczak 2023</Copyright>
+    <!-- we need the assemblies bundled, so set this so we don't expose any dependencies to the outside world -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Tell the SDK to generate a deps.json file -->
+    <GenerateDependencyFile>true</GenerateDependencyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="build\" />
+    <!-- these lines pack the build props/targets files to the `build` folder in the generated package.
+    by convention, the .NET SDK will look for build\<Package Id>.props and build\<Package Id>.targets
+    for automatic inclusion in the build. -->
+    <Content Include="build\Dant.AspNetDependencyValidator.Analyzer.props" PackagePath="build\" />
+    <Content Include="build\Dant.AspNetDependencyValidator.Analyzer.targets" PackagePath="build\" />
+  </ItemGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <!-- The TargetPath is the path inside the package that the source file will be placed. This is already precomputed in the ReferenceCopyLocalPaths items' DestinationSubPath, so reuse it here. -->
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths)" TargetPath="%(ReferenceCopyLocalPaths.DestinationSubPath)" />
+    </ItemGroup>
+  </Target>
+</Project>

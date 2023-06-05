@@ -1,5 +1,6 @@
 using DependencyChecker.App.Controllers;
-using Microsoft.Extensions.DependencyInjection;
+using DependencyChecker.ExternalLib;
+using DependencyChecker.SharedLib;
 using Microsoft.Extensions.Internal;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,9 +14,10 @@ builder.Services.AddLogging(options => options.AddSimpleConsole());
 
 builder.Services.AddSingleton<ISystemClock, SystemClock>();
 builder.Services.AddScoped<IWeatherService>(provider => new WeatherService(
-    provider.GetRequiredService<ISystemClock>(), provider.GetRequiredService<ILogger<WeatherService>>(), provider.GetRequiredService<IServiceProvider>(), provider.GetRequiredService<IEndpointAddressScheme<IEndpointFilter>>()));
+    provider.GetRequiredService<ISystemClock>(), provider.GetRequiredService<ILogger<WeatherService>>(), provider.GetRequiredService<IServiceProvider>()/*, provider.GetRequiredService<IEndpointAddressScheme<IEndpointFilter>>()*/));
 builder.Services.AddSingleton<IDiagnostics, ConsoleDiagnostics>();
-
+builder.Services.AddSingleton<LocationService>();
+builder.Services.RegisterExternalLibDependencies();
 
 var app = builder.Build();
 

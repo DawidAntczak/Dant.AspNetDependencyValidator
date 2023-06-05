@@ -2,7 +2,7 @@
 using Dant.AspNetDependencyValidator;
 using Dant.AspNetDependencyValidator.CodeAnalysis;
 using DependencyChecker.App;
-using DependencyChecker.App.Controllers;
+using DependencyChecker.ExternalLib;
 
 namespace DependencyChecker.Tests;
 
@@ -13,7 +13,7 @@ public class DependencyTests
     public void ValidateDependencies()
     {
         var result = AspNetDependenciesValidator.Validate<WeatherForecast>();
-        Console.WriteLine(result.Message);
+        Console.WriteLine(result);
         Assert.That(result.IsValid, Is.True);
     }
 
@@ -23,12 +23,14 @@ public class DependencyTests
         var genericMethod = typeof(ServiceProviderServiceExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(m => m.ContainsGenericParameters && m.Name == "GetRequiredService");
 
-        using var genericTypesFinder = new GenericTypesFinder(typeof(WeatherForecast).Assembly.Location);
+        using var genericTypesFinderForMainDll = new GenericTypesUsageFinder(typeof(WeatherForecast).Assembly.Location);
+        using var genericTypesFinderExternalDll = new GenericTypesUsageFinder(typeof(ServiceCollectionExtensions).Assembly.Location);
 
-        var usedGenericTypes = genericTypesFinder.FindUsedByMethodGenericTypes(genericMethod);
+        var usedGenericTypes = genericTypesFinderForMainDll.FindUsedByMethodGenericTypes(genericMethod)
+            .Concat(genericTypesFinderExternalDll.FindUsedByMethodGenericTypes(genericMethod));
 
-        var result = AspNetDependenciesValidator.Validate<WeatherForecast>(usedGenericTypes.Select(t => t.UsedType));
-        Console.WriteLine(result.Message);
+        var result = AspNetDependenciesValidator.Validate(typeof(WeatherForecast).Assembly.Location, usedGenericTypes.Select(t => t.UsedType).Distinct());
+        Console.WriteLine(result);
         Assert.That(result.IsValid, Is.True);
     }
 

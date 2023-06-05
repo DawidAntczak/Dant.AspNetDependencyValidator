@@ -10,5 +10,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DependencyChecker.ExternalLib\DependencyChecker.ExternalLib.csproj" />
+    <ProjectReference Include="..\DependencyChecker.SharedLib\DependencyChecker.SharedLib.csproj" />
+  </ItemGroup>
+
 
 </Project>

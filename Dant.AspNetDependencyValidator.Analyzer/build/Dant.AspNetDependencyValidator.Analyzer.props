@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<!--defining properties interesting for my task-->
+	<PropertyGroup>
+		<!--default directory where the .dll was published inside a NuGet package-->
+		<taskFoldername>lib</taskFoldername>
+		<taskFramework>netstandard2.0</taskFramework>
+		<!--The folder where the custom task will be present. It points to inside the NuGet package. -->
+		<CustomTasksFolder>$(MSBuildThisFileDirectory)..\$(taskFoldername)\$(taskFramework)</CustomTasksFolder>
+		<!--Reference to the assembly which contains the MSBuild Task-->
+		<CustomTasksAssembly>$(CustomTasksFolder)\$(MSBuildThisFileName).dll</CustomTasksAssembly>
+	</PropertyGroup>
+
+	<!--Register our custom task-->
+	<UsingTask TaskName="$(MSBuildThisFileName).ValidationTask" AssemblyFile="$(CustomTasksAssembly)"/>
+
+	<PropertyGroup>
+		<_CompiledAssemblyPath>$(MSBuildProjectDirectory)/bin/conf/framework/$(MSBuildProjectName).dll</_CompiledAssemblyPath>
+	</PropertyGroup>
+</Project>

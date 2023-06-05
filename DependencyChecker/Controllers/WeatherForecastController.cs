@@ -1,3 +1,4 @@
+using DependencyChecker.SharedLib;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Internal;
 
@@ -9,11 +10,13 @@ public class WeatherForecastController : ControllerBase
 {
     private readonly ILogger<WeatherForecastController> _logger;
     private readonly IDiagnostics _diagnostics;
+    private readonly IGeoService _geoService;
 
-    public WeatherForecastController(ILogger<WeatherForecastController> logger, IDiagnostics diagnostics)
+    public WeatherForecastController(ILogger<WeatherForecastController> logger, IDiagnostics diagnostics, IGeoService geoService)
     {
         _logger = logger;
         _diagnostics = diagnostics;
+        _geoService = geoService;
     }
 
     [HttpGet]
@@ -34,16 +37,16 @@ public class WeatherService : IWeatherService
 {
     private readonly ISystemClock _systemClock;
     private readonly ILogger<WeatherService> _logger;
-    private readonly IServiceProvider serviceProvider;
+    private readonly IServiceProvider _serviceProvider;
 
-    public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger, IServiceProvider provider, IEndpointAddressScheme<IEndpointFilter> eee)
+    public WeatherService(ISystemClock systemClock, ILogger<WeatherService> logger, IServiceProvider provider/*, IEndpointAddressScheme<IEndpointFilter> eee*/)
     {
         var lambda = () => provider.GetRequiredService<ILogger<WeatherService>>();
         lambda();
         provider.GetService(typeof(ISystemClock));
         _systemClock = systemClock;
         _logger = logger;
-        serviceProvider = provider;
+        _serviceProvider = provider;
     }
 
     private static readonly string[] Summaries = new[]
@@ -53,7 +56,7 @@ public class WeatherService : IWeatherService
 
     public IEnumerable<WeatherForecast> Get()
     {
-        serviceProvider.GetService<ISystemClock>();
+        _serviceProvider.GetService<ISystemClock>();
 
         Console.WriteLine(_systemClock.UtcNow);
 

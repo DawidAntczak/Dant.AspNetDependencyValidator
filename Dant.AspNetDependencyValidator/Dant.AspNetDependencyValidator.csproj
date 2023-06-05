@@ -6,7 +6,7 @@
 
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Version>0.1.5</Version>
+    <Version>0.1.6</Version>
     <Title>Dant.AspNetDependencyValidator</Title>
     <Authors>Dawid Antczak</Authors>
     <Description>A validator for Microsoft.Extensions.DependencyInjection.IServiceCollection which checks if all required services are registered and which can be run in a test scenario.</Description>

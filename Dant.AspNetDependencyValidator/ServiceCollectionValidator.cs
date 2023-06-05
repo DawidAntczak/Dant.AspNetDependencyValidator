@@ -19,7 +19,6 @@ namespace Dant.AspNetDependencyValidator
 {
     internal class ServiceCollectionValidator
     {
-        public bool IsValid => FailedValidations.All(x => x.Severity != Severity.Error);
         public HashSet<FailedValidation> FailedValidations { get; set; } = new HashSet<FailedValidation>();
 
         private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
@@ -45,14 +44,6 @@ namespace Dant.AspNetDependencyValidator
         {
             _serviceProvider = serviceCollection.BuildServiceProvider();
             _registeredServices = serviceCollection.ToList();
-        }
-
-        public void ValidateServiceCollection()
-        {
-            foreach (var service in _registeredServices)
-            {
-                ValidateServiceInternal(Enumerable.Empty<Type>(), service);
-            }
         }
 
         public void ValidateControllers(Assembly assembly)
@@ -82,7 +73,6 @@ namespace Dant.AspNetDependencyValidator
         {
             foreach (var type in types)
             {
-                //_validatedServices.RemoveWhere(x => x.ServiceType == type); no need for it
                 ValidateChildService(new List<Type>(), type, ServiceLifetime.Transient);
             }
         }
@@ -92,10 +82,6 @@ namespace Dant.AspNetDependencyValidator
             if (!_validatedServices.Add(service))
                 return;
 
-            // TODO idk why but it can't be resolved
-            if (service.ServiceType.ToString() == "Microsoft.AspNetCore.SignalR.Internal.HubDispatcher`1[THub]")
-                return;
-
             if (service.ImplementationType is null)
             {
                 // If we have an instance or a factory then we consider this successfully resolved - even though it might not be true in case of implementation factory
@@ -103,7 +89,7 @@ namespace Dant.AspNetDependencyValidator
                 if (service.ImplementationInstance != null || service.ImplementationFactory != null)
                     return;
 
-                FailedValidations.Add(new FailedValidation(Severity.Error, service.ServiceType, "Service is registered but does not have implementation of any kind."));
+                FailedValidations.Add(new FailedValidation(FailureType.MissingService, service.ServiceType, "Service is registered but does not have implementation of any kind."));
                 return;
             }
 
@@ -118,7 +104,7 @@ namespace Dant.AspNetDependencyValidator
 
             if (constructor is null)
             {
-                FailedValidations.Add(new FailedValidation(Severity.Warning, service.ServiceType,
+                FailedValidations.Add(new FailedValidation(FailureType.MissingService, service.ServiceType,
                     $"Service implementation {service.ImplementationType.Name} does not have valid constructors."));
                 return;
             }
@@ -137,7 +123,7 @@ namespace Dant.AspNetDependencyValidator
             // This one is, of course, resolvable even though it does not exist in the serviceCollection list.
             if (serviceType == typeof(IServiceProvider) || serviceType == typeof(IServiceScopeFactory))
                 return;
-
+/*
 #if NET6_0_OR_GREATER
             if (serviceType == typeof(IServiceProviderIsService))
                 return;
@@ -148,7 +134,7 @@ namespace Dant.AspNetDependencyValidator
             if (serviceType == typeof(IActionContextAccessor))
                 return;
 #endif
-
+*/
             var matches = _registeredServices.Where(
                 x => x.ServiceType == serviceType || (serviceType.IsGenericType && x.ServiceType == serviceType.GetGenericTypeDefinition())).ToList();
 
@@ -161,7 +147,7 @@ namespace Dant.AspNetDependencyValidator
                     return;
                 }
 
-                FailedValidations.Add(new FailedValidation(Severity.Error, serviceType, $"Failed to resolve {serviceType}" + (parents.Any() ? $" needed to create {string.Join(" <- ", parents.Reverse())}" : "")));
+                FailedValidations.Add(new FailedValidation(FailureType.MissingService, serviceType, $"Failed to resolve {serviceType}" + (parents.Any() ? $" needed to create {string.Join(" <- ", parents.Reverse())}" : "")));
 
                 return;
             }
@@ -171,7 +157,7 @@ namespace Dant.AspNetDependencyValidator
                 var explicitMatch = matches.SingleOrDefault(x => x.ImplementationType == explicitImplementationType);
                 if (explicitMatch is null)
                 {
-                    FailedValidations.Add(new FailedValidation(Severity.Error, serviceType,
+                    FailedValidations.Add(new FailedValidation(FailureType.MissingService, serviceType,
                         $"{serviceType} does not match required implementation type {explicitImplementationType}"));
                 }
             }
@@ -187,7 +173,7 @@ namespace Dant.AspNetDependencyValidator
 
                 if (explicitServiceLifetime != null && match.Lifetime != explicitServiceLifetime)
                 {
-                    FailedValidations.Add(new FailedValidation(Severity.Error, serviceType,
+                    FailedValidations.Add(new FailedValidation(FailureType.MissingService, serviceType,
                         $"Service is implemented with {match.Lifetime:G} service lifetime, but is required to have {explicitServiceLifetime:G} service lifetime."));
                 }
             }
@@ -205,7 +191,7 @@ namespace Dant.AspNetDependencyValidator
             {
                 case ServiceLifetime.Singleton when child is ServiceLifetime.Scoped || child is ServiceLifetime.Transient:
                 case ServiceLifetime.Scoped when child is ServiceLifetime.Transient:
-                    FailedValidations.Add(new FailedValidation(Severity.Warning, serviceType,
+                    FailedValidations.Add(new FailedValidation(FailureType.Lifetime, serviceType,
                         $"Service {serviceType} is implemented with {child} service lifetime, but the parent ({parentType}) has {parentLifetime} service lifetime."));
                     break;
             }

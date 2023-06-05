@@ -7,11 +7,11 @@ using Mono.Cecil.Cil;
 
 namespace Dant.AspNetDependencyValidator.CodeAnalysis
 {
-    public class GenericTypesFinder : IDisposable
+    public class GenericTypesUsageFinder : IDisposable
     {
         private readonly AssemblyDefinition _assembly;
 
-        public GenericTypesFinder(string assemblyLocation)
+        public GenericTypesUsageFinder(string assemblyLocation)
         {
             _assembly = AssemblyDefinition.ReadAssembly(assemblyLocation);
         }
@@ -70,3 +70,4 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis
         }
     }
 }
+

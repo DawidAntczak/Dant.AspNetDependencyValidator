@@ -23,7 +23,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "eShopOnWe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PublicApi", "eShopOnWeb\src\PublicApi\PublicApi.csproj", "{A44FA68D-1CB2-4C6E-A88B-26D4FBDC039D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EShopOnWeb.DependencyTests", "EShopOnWeb.DependencyTests\EShopOnWeb.DependencyTests.csproj", "{48C6AD50-8B47-4E54-B897-EACAB73598BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EShopOnWeb.DependencyTests", "EShopOnWeb.DependencyTests\EShopOnWeb.DependencyTests.csproj", "{48C6AD50-8B47-4E54-B897-EACAB73598BE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dant.AspNetDependencyValidator.Analyzer", "Dant.AspNetDependencyValidator.Analyzer\Dant.AspNetDependencyValidator.Analyzer.csproj", "{170081B1-2DD2-487C-B424-8361DD4BF1DD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dant.AspNetDependencyValidator.AnalyzerTests", "Dant.AspNetDependencyValidator.AnalyzerTests\Dant.AspNetDependencyValidator.AnalyzerTests.csproj", "{0030F140-5F32-4872-83CC-F34724A8DD33}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyChecker.ExternalLib", "DependencyChecker.ExternalLib\DependencyChecker.ExternalLib.csproj", "{F331404B-1FEE-42DB-B2AF-07E9648634BB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyChecker.SharedLib", "DependencyChecker.SharedLib\DependencyChecker.SharedLib.csproj", "{7BFA357C-818F-404D-98AA-376B20644183}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +79,22 @@ Global
 		{48C6AD50-8B47-4E54-B897-EACAB73598BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48C6AD50-8B47-4E54-B897-EACAB73598BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48C6AD50-8B47-4E54-B897-EACAB73598BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0030F140-5F32-4872-83CC-F34724A8DD33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0030F140-5F32-4872-83CC-F34724A8DD33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0030F140-5F32-4872-83CC-F34724A8DD33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0030F140-5F32-4872-83CC-F34724A8DD33}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BFA357C-818F-404D-98AA-376B20644183}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BFA357C-818F-404D-98AA-376B20644183}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BFA357C-818F-404D-98AA-376B20644183}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BFA357C-818F-404D-98AA-376B20644183}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

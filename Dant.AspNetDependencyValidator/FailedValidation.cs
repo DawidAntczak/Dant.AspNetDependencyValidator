@@ -2,16 +2,16 @@
 
 namespace Dant.AspNetDependencyValidator
 {
-    internal class FailedValidation
+    public class FailedValidation
     {
-        public Severity Severity { get; }
+        public FailureType FailureType { get; }
         public Type ServiceType { get; }
 
         public string Message { get; }
 
-        public FailedValidation(Severity severity, Type serviceType, string message)
+        public FailedValidation(FailureType failureType, Type serviceType, string message)
         {
-            Severity = severity;
+            FailureType = failureType;
             ServiceType = serviceType;
             Message = message;
         }
@@ -19,7 +19,7 @@ namespace Dant.AspNetDependencyValidator
         public override bool Equals(object obj)
         {
             if (obj is FailedValidation fv)
-                return ServiceType == fv.ServiceType && Message == fv.Message && Severity == fv.Severity;
+                return ServiceType == fv.ServiceType && Message == fv.Message && FailureType == fv.FailureType;
 
             return false;
         }

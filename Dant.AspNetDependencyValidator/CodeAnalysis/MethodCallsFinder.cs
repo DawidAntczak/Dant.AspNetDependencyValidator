@@ -25,7 +25,8 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis
         {
             var methodToBeFoundRef = _assembly.MainModule.ImportReference(methodToFind);
 
-            // Types property doesn't include lambdas so use GetTypes() instead but GetMethods() returns less than Methods property
+            // Types property doesn't include lambdas so use GetTypes() instead
+            // but GetMethods() returns less than Methods property so stick with Methods property
             var allAssemblyMethods = _assembly.MainModule.GetTypes().SelectMany(t => t.Methods);
 
             // Find calls to the method
