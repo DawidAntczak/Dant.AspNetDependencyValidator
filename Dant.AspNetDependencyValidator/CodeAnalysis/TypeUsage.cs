@@ -1,9 +1,9 @@
 ﻿using System;
 using Mono.Cecil;
 
-namespace Dant.AspNetDependencyValidator.CodeAnalysis
+namespace Dant.AspNetDependencyValidator.CallsFinding
 {
-    public class TypeUsage
+    internal sealed class TypeUsage
     {
         public Type UsedType { get; }
 

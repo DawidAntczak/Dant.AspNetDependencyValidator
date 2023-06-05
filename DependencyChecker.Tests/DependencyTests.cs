@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 using Dant.AspNetDependencyValidator;
-using Dant.AspNetDependencyValidator.CodeAnalysis;
+using Dant.AspNetDependencyValidator.CallsFinding;
 using DependencyChecker.App;
 using DependencyChecker.ExternalLib;
 
@@ -20,22 +20,29 @@ public class DependencyTests
     [Test]
     public void ValidateDependencies_With_RequiredServicesGetFromProvider()
     {
-        var genericMethod = typeof(ServiceProviderServiceExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.ContainsGenericParameters && m.Name == "GetRequiredService");
+        var result = AspNetDependenciesValidator.Validate(typeof(WeatherForecast).Assembly.Location, typeof(ServiceCollectionExtensions).Assembly.Location);
 
-        using var genericTypesFinderForMainDll = new GenericTypesUsageFinder(typeof(WeatherForecast).Assembly.Location);
-        using var genericTypesFinderExternalDll = new GenericTypesUsageFinder(typeof(ServiceCollectionExtensions).Assembly.Location);
-
-        var usedGenericTypes = genericTypesFinderForMainDll.FindUsedByMethodGenericTypes(genericMethod)
-            .Concat(genericTypesFinderExternalDll.FindUsedByMethodGenericTypes(genericMethod));
-
-        var result = AspNetDependenciesValidator.Validate(typeof(WeatherForecast).Assembly.Location, usedGenericTypes.Select(t => t.UsedType).Distinct());
         Console.WriteLine(result);
         Assert.That(result.IsValid, Is.True);
     }
 
     [Test]
-    public void T1()
+    public void ValidateDependencies_With_RequiredServicesGetFromProvider2()
+    {
+        var result = ServiceCollectionValidator<WeatherForecast>.ForEntryAssembly()
+            .And(typeof(ServiceCollectionExtensions).Assembly)
+            .WithValidationsOf()
+            .Controllers()
+            .GetRequiredServiceTypes()
+            .Build()
+            .Run();
+
+        Console.WriteLine(result);
+        Assert.That(result.IsValid, Is.True);
+    }
+
+    [Test]
+    public void PrintCallStack()
     {
         using var callsFinder = new MethodCallsFinder(typeof(WeatherForecast).Assembly.Location);
 

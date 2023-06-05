@@ -1,214 +1,142 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System;
 using System.Reflection;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Routing;
+using Dant.AspNetDependencyValidator.CallsFinding;
+using Dant.AspNetDependencyValidator.Validation;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
-#if NETCOREAPP3_1_OR_GREATER
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.ViewComponents;
-using Microsoft.AspNetCore.Mvc.Razor;
-#endif
 
 namespace Dant.AspNetDependencyValidator
 {
-    internal class ServiceCollectionValidator
+    public sealed class ServiceCollectionValidator<TEntryPoint> : IAddAssembliesBuildStage, IAddValidationsBuildStage, IAddAssumedExistingTypesStage
+        where TEntryPoint : class
     {
-        public HashSet<FailedValidation> FailedValidations { get; set; } = new HashSet<FailedValidation>();
+        private readonly List<Assembly> _assemblies = new List<Assembly> { typeof(TEntryPoint).Assembly };
+        private readonly List<Action<ServiceCollectionValidator>> _validations = new List<Action<ServiceCollectionValidator>>();
+        private bool _onBuildValidation = false;
+        private readonly HashSet<Type> _assumedExistingTypes = new HashSet<Type>();
 
-        private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
-        // Ignore the scope check for some Microsoft implementations, they are registered as Transient, but are used in Singleton services
-        // TODO maybe just ignore all Microsoft.* services?
-        private readonly IEnumerable<Type> _ignoredForScopeValidation = new List<Type>()
+        private ServiceCollectionValidator() { }
+
+        public static IAddAssembliesBuildStage ForEntryAssembly()
         {
-            typeof(IOptionsFactory<>),
-            typeof(ICompositeMetadataDetailsProvider),
-            typeof(IControllerActivator),
-            typeof(IAuthorizationPolicyProvider),
-#if NETCOREAPP3_1_OR_GREATER
-            typeof(IViewComponentDescriptorProvider),
-            typeof(IRazorPageFactoryProvider)
-#endif
-        };
-
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IEnumerable<ServiceDescriptor> _registeredServices;
-        private readonly HashSet<ServiceDescriptor> _validatedServices = new HashSet<ServiceDescriptor>();
-
-        public ServiceCollectionValidator(IServiceCollection serviceCollection)
-        {
-            _serviceProvider = serviceCollection.BuildServiceProvider();
-            _registeredServices = serviceCollection.ToList();
+            return new ServiceCollectionValidator<TEntryPoint>();
         }
 
-        public void ValidateControllers(Assembly assembly)
+        public IAddAssembliesBuildStage And(Assembly assembly)
         {
-            var controllers = assembly.GetTypes().Where(x => (typeof(ControllerBase)).IsAssignableFrom(x));
-
-            foreach (var controller in controllers)
-            {
-                ValidateServiceInternal(new Type[] { controller }, new ServiceDescriptor(controller, controller, _controllerLifetime));
-                ValidateEndpoints(controller);
-            }
+            _assemblies.Add(assembly);
+            return this;
         }
 
-        public void ValidatePages(Assembly assembly)
+        public IAddAssembliesBuildStage And<TFromAssembly>()
         {
-            var basePageClass = Type.GetType("Microsoft.AspNetCore.Mvc.RazorPages.PageModel, Microsoft.AspNetCore.Mvc.RazorPages");
-            var pages = assembly.GetTypes().Where(x => basePageClass.IsAssignableFrom(x));
-
-            foreach (var page in pages)
-            {
-                ValidateServiceInternal(new Type[] { page }, new ServiceDescriptor(page, page, _controllerLifetime));
-                ValidateEndpoints(page);
-            }
+            _assemblies.Add(typeof(TFromAssembly).Assembly);
+            return this;
         }
 
-        public void ValidateServices(IEnumerable<Type> types)
+        public IAddValidationsBuildStage WithValidationsOf()
         {
-            foreach (var type in types)
-            {
-                ValidateChildService(new List<Type>(), type, ServiceLifetime.Transient);
-            }
+            return this;
         }
 
-        private void ValidateServiceInternal(IEnumerable<Type> parents, ServiceDescriptor service)
+        public IAddValidationsBuildStage Controllers()
         {
-            if (!_validatedServices.Add(service))
-                return;
-
-            if (service.ImplementationType is null)
-            {
-                // If we have an instance or a factory then we consider this successfully resolved - even though it might not be true in case of implementation factory
-                // TODO deeper checks
-                if (service.ImplementationInstance != null || service.ImplementationFactory != null)
-                    return;
-
-                FailedValidations.Add(new FailedValidation(FailureType.MissingService, service.ServiceType, "Service is registered but does not have implementation of any kind."));
-                return;
-            }
-
-            var constructors = service.ImplementationType.GetConstructors();
-
-            // Get the constructor with the ActivatorUtilitiesConstructor attribute, which is used by the DI to find the correct constructor in case of multiple 
-            // constructors. For some reason, some of the Microsoft implementations have multiple constructors, mostly extended with ILogger<> parameter. I'm not 
-            // sure how DI knows which one to use, but I assume it tries the one by one, starting with the one with most arguments, until it succeeds resolving all elements. 
-            // I just grab the first one and consider it good enough, but it might require better implementation in the future. 
-            var constructor = constructors.SingleOrDefault(x =>
-                    x?.GetCustomAttribute<ActivatorUtilitiesConstructorAttribute>() != null) ?? constructors.FirstOrDefault();
-
-            if (constructor is null)
-            {
-                FailedValidations.Add(new FailedValidation(FailureType.MissingService, service.ServiceType,
-                    $"Service implementation {service.ImplementationType.Name} does not have valid constructors."));
-                return;
-            }
-
-            var parameters = constructor.GetParameters();
-
-            foreach (var parameterInfo in parameters)
-            {
-                ValidateChildService(parents.Append(service.ServiceType), parameterInfo.ParameterType, service.Lifetime);
-            }
+            _validations.Add(v => v.ValidateControllers(typeof(TEntryPoint).Assembly));
+            return this;
         }
 
-        private void ValidateChildService(IEnumerable<Type> parents, Type serviceType, ServiceLifetime parentLifetime,
-            Type explicitImplementationType = null, ServiceLifetime? explicitServiceLifetime = null)
+        public IAddValidationsBuildStage Pages()
         {
-            // This one is, of course, resolvable even though it does not exist in the serviceCollection list.
-            if (serviceType == typeof(IServiceProvider) || serviceType == typeof(IServiceScopeFactory))
-                return;
-/*
-#if NET6_0_OR_GREATER
-            if (serviceType == typeof(IServiceProviderIsService))
-                return;
-#endif
-
-#if NETCOREAPP3_1_OR_GREATER
-            // https://stackoverflow.com/questions/58118280/iactioncontextaccessor-is-null
-            if (serviceType == typeof(IActionContextAccessor))
-                return;
-#endif
-*/
-            var matches = _registeredServices.Where(
-                x => x.ServiceType == serviceType || (serviceType.IsGenericType && x.ServiceType == serviceType.GetGenericTypeDefinition())).ToList();
-
-            if (!matches.Any())
-            {
-                if (serviceType.IsGenericType && serviceType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                {
-                    // IEnumerable<> dependencies are valid to resolve to empty enumerable
-                    // TODO maybe warn?
-                    return;
-                }
-
-                FailedValidations.Add(new FailedValidation(FailureType.MissingService, serviceType, $"Failed to resolve {serviceType}" + (parents.Any() ? $" needed to create {string.Join(" <- ", parents.Reverse())}" : "")));
-
-                return;
-            }
-
-            if (explicitImplementationType != null)
-            {
-                var explicitMatch = matches.SingleOrDefault(x => x.ImplementationType == explicitImplementationType);
-                if (explicitMatch is null)
-                {
-                    FailedValidations.Add(new FailedValidation(FailureType.MissingService, serviceType,
-                        $"{serviceType} does not match required implementation type {explicitImplementationType}"));
-                }
-            }
-
-            foreach (var match in matches)
-            {
-                var parent = parents.LastOrDefault();
-                if (parent != null)
-                {
-                    ValidateServiceLifetime(match.ServiceType, parent, parentLifetime, match.Lifetime);
-                }
-                ValidateServiceInternal(parents.Append(match.ServiceType), match);
-
-                if (explicitServiceLifetime != null && match.Lifetime != explicitServiceLifetime)
-                {
-                    FailedValidations.Add(new FailedValidation(FailureType.MissingService, serviceType,
-                        $"Service is implemented with {match.Lifetime:G} service lifetime, but is required to have {explicitServiceLifetime:G} service lifetime."));
-                }
-            }
+            _validations.Add(v => v.ValidatePages(typeof(TEntryPoint).Assembly));
+            return this;
         }
 
-        private void ValidateServiceLifetime(Type serviceType, Type parentType, ServiceLifetime parentLifetime, ServiceLifetime child)
+        public IAddValidationsBuildStage OnBuild()
         {
-            // Never inject Scoped & Transient services into Singleton service.
-            // Never inject Transient services into scoped service
-            // Ignore certain microsoft implementations.
-            if (_ignoredForScopeValidation.Contains(serviceType))
-                return;
-
-            switch (parentLifetime)
-            {
-                case ServiceLifetime.Singleton when child is ServiceLifetime.Scoped || child is ServiceLifetime.Transient:
-                case ServiceLifetime.Scoped when child is ServiceLifetime.Transient:
-                    FailedValidations.Add(new FailedValidation(FailureType.Lifetime, serviceType,
-                        $"Service {serviceType} is implemented with {child} service lifetime, but the parent ({parentType}) has {parentLifetime} service lifetime."));
-                    break;
-            }
+            _onBuildValidation = true;
+            return this;
         }
 
-        private void ValidateEndpoints(Type controller)
+        public IAddValidationsBuildStage GetRequiredServiceTypes()
         {
-            var endpointMethods = controller.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                .Where(x => x.GetCustomAttributes<HttpMethodAttribute>().Any());
+            return AddServiceProviderServiceExtensionsCalledTypesValidation("GetRequiredService");
+        }
 
-            var fromServiceParameters = endpointMethods.SelectMany(x => x.GetParameters())
-                .Where(x => x.GetCustomAttributes<FromServicesAttribute>().Any());
+        public IAddValidationsBuildStage GetServiceTypes()
+        {
+            return AddServiceProviderServiceExtensionsCalledTypesValidation("GetService");
+        }
 
-            foreach (var parameterInfo in fromServiceParameters)
-            {
-                ValidateChildService(new Type[] { controller }, parameterInfo.ParameterType, _controllerLifetime);
-            }
+        /* TODO: Implement
+        public ValidationBuilder<TEntryPoint> ValidateLifetime()
+        {
+            return this;
+        }*/
+
+        public IAddAssumedExistingTypesStage AssumingExistenceOf()
+        {
+            return this;
+        }
+
+        public IAddAssumedExistingTypesStage Service<T>()
+        {
+            _assumedExistingTypes.Add(typeof(T));
+            return this;
+        }
+
+        public IAddAssumedExistingTypesStage Service(Type type)
+        {
+            _assumedExistingTypes.Add(type);
+            return this;
+        }
+
+        public IValidator Build()
+        {
+            return new Validator<TEntryPoint>(_validations, _onBuildValidation, _assumedExistingTypes);
+        }
+
+        private IAddValidationsBuildStage AddServiceProviderServiceExtensionsCalledTypesValidation(string methodName)
+        {
+            var method = typeof(ServiceProviderServiceExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.ContainsGenericParameters && m.Name == methodName);
+
+            var usages = _assemblies
+                .Select(a => new GenericTypesUsageFinder(a.Location))
+                .SelectMany(f => f.FindUsedByMethodGenericTypes(method));
+
+            var requiredTypes = usages
+                .Select(u => u.UsedType)
+                .Distinct();
+
+            _validations.Add(v => v.ValidateServices(requiredTypes));
+            return this;
         }
     }
+
+    public interface IAddAssembliesBuildStage
+    {
+        IAddAssembliesBuildStage And(Assembly assembly);
+        IAddAssembliesBuildStage And<TFromAssembly>();
+        IAddValidationsBuildStage WithValidationsOf();
+    }
+
+    public interface IAddValidationsBuildStage
+    {
+        IAddValidationsBuildStage Controllers();
+        IAddValidationsBuildStage Pages();
+        IAddValidationsBuildStage GetRequiredServiceTypes();
+        IAddValidationsBuildStage GetServiceTypes();
+        IAddAssumedExistingTypesStage AssumingExistenceOf();
+        // IAddValidationsBuildStage ValidateLifetime();
+        IValidator Build();
+    }
+
+    public interface IAddAssumedExistingTypesStage
+    {
+        IAddAssumedExistingTypesStage Service<T>();
+        IAddAssumedExistingTypesStage Service(Type type);
+        IValidator Build();
+    }
 }
+

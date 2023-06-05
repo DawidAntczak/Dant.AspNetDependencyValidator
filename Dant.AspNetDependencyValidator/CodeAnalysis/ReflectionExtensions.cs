@@ -2,9 +2,9 @@
 using System.Linq;
 using Mono.Cecil;
 
-namespace Dant.AspNetDependencyValidator.CodeAnalysis
+namespace Dant.AspNetDependencyValidator.CallsFinding
 {
-    public static class TypeReferenceExtensions
+    internal static class TypeReferenceExtensions
     {
         public static Type ConvertToSystemType(this TypeReference type)
         {

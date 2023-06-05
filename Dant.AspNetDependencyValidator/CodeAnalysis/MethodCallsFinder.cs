@@ -5,9 +5,9 @@ using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Dant.AspNetDependencyValidator.CodeAnalysis
+namespace Dant.AspNetDependencyValidator.CallsFinding
 {
-    public class MethodCallsFinder : IDisposable
+    internal sealed class MethodCallsFinder : IDisposable
     {
         private readonly AssemblyDefinition _assembly;
 

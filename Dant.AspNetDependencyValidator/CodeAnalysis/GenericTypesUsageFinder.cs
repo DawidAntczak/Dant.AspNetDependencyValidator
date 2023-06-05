@@ -5,9 +5,9 @@ using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Dant.AspNetDependencyValidator.CodeAnalysis
+namespace Dant.AspNetDependencyValidator.CallsFinding
 {
-    public class GenericTypesUsageFinder : IDisposable
+    internal sealed class GenericTypesUsageFinder : IDisposable
     {
         private readonly AssemblyDefinition _assembly;
 
@@ -27,6 +27,9 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis
                 throw new ArgumentException("Method doesn't contain generic parameters", nameof(methodWithGenericParameter));
 
             var methodToBeFoundRef = _assembly.MainModule.ImportReference(methodWithGenericParameter);
+
+            if (methodToBeFoundRef.GenericParameters.Count >1)
+                throw new ArgumentException("Method contains more than one generic parameter", nameof(methodWithGenericParameter));
 
             var callsStacksToMethod = new List<TypeUsage>();
 
