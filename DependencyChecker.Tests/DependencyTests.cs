@@ -63,7 +63,28 @@ public class DependencyTests
                 .Including(typeof(ServiceCollectionExtensions).Assembly))
             .WithValidation(including => including
                 .Controllers()
-                .GetRequiredServiceCalls())
+                .TypesPassedToGetRequiredService())
+            .Build()
+            .Run();
+
+        Console.WriteLine(result);
+        Assert.That(result.IsValid, Is.True, result.ToString());
+    }
+
+    [Test]
+    public void ValidateDependencies_With_RequiredServicesGetFromProvider_WithoutSugar()
+    {
+        var result = ServiceCollectionValidator
+            .ForEntryAssembly<WeatherForecast>()
+            .WithAdditional(assemblies => assemblies
+                .Including(typeof(ServiceCollectionExtensions).Assembly))
+            .WithValidation(including => including
+                .Controllers()
+                .TypesPassed()
+                    .To(typeof(ServiceProviderServiceExtensions)
+                        .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                        .Single(m => m.ContainsGenericParameters && m.Name == "GetRequiredService"))
+                    .AtPosition(0))
             .Build()
             .Run();
 

@@ -12,7 +12,7 @@ public class DependencyTest
             .ForEntryAssembly<Microsoft.eShopWeb.PublicApi.MappingProfile>()
             .WithValidation(including => including
                 .Controllers()
-                .GetRequiredServiceCalls())
+                .TypesPassedToGetRequiredService())
             .Build()
             .Run();
 
@@ -27,7 +27,7 @@ public class DependencyTest
             .ForEntryAssembly<Microsoft.eShopWeb.Web.SlugifyParameterTransformer>()
             .WithValidation(including => including
                 .Controllers()
-                .GetRequiredServiceCalls())
+                .TypesPassedToGetRequiredService())
             .Build()
             .Run();
 

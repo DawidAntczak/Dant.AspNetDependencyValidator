@@ -22,15 +22,15 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder
             _assembly.Dispose();
         }
 
-        public IEnumerable<TypeUsage> FindUsedByMethodGenericTypes(MethodInfo methodWithGenericParameter)
+        public IEnumerable<TypeUsage> FindUsedByMethodGenericTypes(MethodInfo methodWithGenericParameter, int parameterPosition)
         {
             if (!methodWithGenericParameter.ContainsGenericParameters)
                 throw new ArgumentException("Method doesn't contain generic parameters", nameof(methodWithGenericParameter));
 
             var methodToBeFoundRef = _assembly.MainModule.ImportReference(methodWithGenericParameter);
 
-            if (methodToBeFoundRef.GenericParameters.Count > 1)
-                throw new ArgumentException("Method contains more than one generic parameter", nameof(methodWithGenericParameter));
+            if (parameterPosition > methodToBeFoundRef.GenericParameters.Count)
+                throw new ArgumentException($"Method contains only {methodToBeFoundRef.GenericParameters.Count} parameter but requested position {parameterPosition}", nameof(methodWithGenericParameter));
 
             var callsStacksToMethod = new List<TypeUsage>();
 
@@ -40,7 +40,7 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder
                 foreach (var method in type.Methods)
                 {
                     // Find calls to the method
-                    var calls = FindGenericTypesUsedToCallMethod(methodToBeFoundRef, type, method);
+                    var calls = FindGenericTypesUsedToCallMethod(methodToBeFoundRef, parameterPosition, type, method);
                     callsStacksToMethod.AddRange(calls);
                 }
             }
@@ -50,7 +50,7 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder
         }
 
         // Helper method to find calls to a given method in an assembly
-        private List<TypeUsage> FindGenericTypesUsedToCallMethod(MethodReference methodToFind, TypeDefinition callingType, MethodDefinition callingMethod)
+        private List<TypeUsage> FindGenericTypesUsedToCallMethod(MethodReference methodToFind, int parameterPosition, TypeDefinition callingType, MethodDefinition callingMethod)
         {
             if (!callingMethod.HasBody)
                 return new List<TypeUsage>();
@@ -63,7 +63,7 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder
                 {
                     if (instruction.Operand is GenericInstanceMethod calledMethod && calledMethod.Name == methodToFind.Name)
                     {
-                        var arg = calledMethod.GenericArguments.First();
+                        var arg = calledMethod.GenericArguments.ElementAt(parameterPosition);
                         result.Add(new TypeUsage(arg.ConvertToSystemType(), callingType.ConvertToSystemType(), callingMethod));
                     }
                 }

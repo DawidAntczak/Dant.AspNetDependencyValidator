@@ -6,6 +6,7 @@ using System.Reflection;
 using Dant.AspNetDependencyValidator.Validation.ValidationLogic;
 using Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder;
 using Dant.AspNetDependencyValidator.Extensions;
+using Dant.AspNetDependencyValidator.Validation.Builder.Stages;
 
 namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
 {
@@ -13,8 +14,9 @@ namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
     {
         IValidationCollectionBuilder Controllers();
         IValidationCollectionBuilder Pages();
-        IValidationCollectionBuilder GetRequiredServiceCalls();
-        IValidationCollectionBuilder GetServiceCalls();
+        ITypesPassedMethodStage TypesPassed();
+        IValidationCollectionBuilder TypesPassedToGetRequiredService();
+        IValidationCollectionBuilder TypesPassedToGetService();
         IValidationCollectionBuilder CollectionBuild();
     }
 
@@ -44,14 +46,41 @@ namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
             return this;
         }
 
-        public IValidationCollectionBuilder GetRequiredServiceCalls()
+        public ITypesPassedMethodStage TypesPassed()
         {
-            return AddServiceProviderServiceExtensionsCalledTypesValidation("GetRequiredService");
+            var onFinish = (TypesPassedBuilder builder) =>
+            {
+                using var usageFinders = _assembliesToValidate
+                .Select(a => new GenericTypesUsageFinder(a.Location))
+                .ToDisposableArray();
+
+                var usages = usageFinders
+                    .SelectMany(f => f.FindUsedByMethodGenericTypes(builder.MethodWithGenericParameters, builder.ParameterPosition));
+
+                var requiredTypes = usages
+                    .Select(u => u.UsedType)
+                    .Distinct()
+                    .ToArray();
+
+                Validations.Add(v => v.ValidateServices(requiredTypes));
+            };
+            return new TypesPassedBuilder(this, onFinish);
         }
 
-        public IValidationCollectionBuilder GetServiceCalls()
+        public IValidationCollectionBuilder TypesPassedToGetRequiredService()
         {
-            return AddServiceProviderServiceExtensionsCalledTypesValidation("GetService");
+            var method = typeof(ServiceProviderServiceExtensions)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.ContainsGenericParameters && m.Name == "GetRequiredService");
+            return TypesPassed().To(method).AtPosition(0);
+        }
+
+        public IValidationCollectionBuilder TypesPassedToGetService()
+        {
+            var method = typeof(ServiceProviderServiceExtensions)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .Single(m => m.ContainsGenericParameters && m.Name == "GetService");
+            return TypesPassed().To(method).AtPosition(0);
         }
 
         public IValidationCollectionBuilder CollectionBuild()
@@ -65,27 +94,5 @@ namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
         {
             return this;
         }*/
-
-        private IValidationCollectionBuilder AddServiceProviderServiceExtensionsCalledTypesValidation(string methodName)
-        {
-            var method = typeof(ServiceProviderServiceExtensions)
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .Single(m => m.ContainsGenericParameters && m.Name == methodName);
-
-            using var usageFinders = _assembliesToValidate
-                .Select(a => new GenericTypesUsageFinder(a.Location))
-                .ToDisposableArray();
-
-            var usages = usageFinders
-                .SelectMany(f => f.FindUsedByMethodGenericTypes(method));
-
-            var requiredTypes = usages
-                .Select(u => u.UsedType)
-                .Distinct()
-                .ToArray();
-
-            Validations.Add(v => v.ValidateServices(requiredTypes));
-            return this;
-        }
     }
 }
