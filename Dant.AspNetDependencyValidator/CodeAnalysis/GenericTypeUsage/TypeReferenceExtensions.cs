@@ -27,14 +27,19 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis.GenericTypeUsage
             if (type.IsGenericInstance)
             {
                 var genericInstance = (GenericInstanceType)type;
-                return string.Format("{0}.{1}[[{2}]]", genericInstance.Namespace, type.Name, string.Join(",", genericInstance.GenericArguments.Select(p => p.GetFullName()).ToArray())) + ", " + genericInstance.Scope.Name;
+                return string.Format("{0}.{1}[[{2}]]",
+                    genericInstance.Namespace,
+                    type.Name,
+                    string.Join(",", genericInstance.GenericArguments.Select(p => p.GetFullName()).ToArray())) + ", " + genericInstance.Scope.Name;
             }
             return type.FullName + ", " + type.GetAssemblyName();
         }
 
         private static string GetAssemblyName(this TypeReference type)
         {
-            return type.Scope is ModuleDefinition moduleScope ? moduleScope.Assembly.FullName : type.Scope.Name;
+            return type.Scope is ModuleDefinition moduleScope
+                ? moduleScope.Assembly.FullName
+                : type.Scope.Name;
         }
     }
 }
