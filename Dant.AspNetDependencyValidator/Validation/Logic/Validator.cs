@@ -16,9 +16,9 @@ namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
 
         private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
         private readonly IEnumerable<ServiceDescriptor> _registeredServices;
-        private readonly HashSet<ServiceDescriptor> _validatedServices = new HashSet<ServiceDescriptor>();
+        private readonly HashSet<ServiceDescriptor> _validatedServices = new();
 
-        private readonly HashSet<Type> _assumedExistingTypes = new HashSet<Type>
+        private readonly HashSet<Type> _assumedExistingTypes = new()
         {
             typeof(IServiceProvider),
             typeof(IServiceScopeFactory),

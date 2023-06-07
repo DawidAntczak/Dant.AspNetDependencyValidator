@@ -12,7 +12,7 @@ namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
     internal sealed class AssumedServiceCollectionBuilder : IAssumedServiceCollectionBuilder
     {
         public HashSet<Type> AssumedExistingServices { get; } = new HashSet<Type>();
-            
+
         public IAssumedServiceCollectionBuilder Including<T>()
         {
             AssumedExistingServices.Add(typeof(T));

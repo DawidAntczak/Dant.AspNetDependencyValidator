@@ -61,9 +61,7 @@ namespace Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder
             {
                 if (instruction.OpCode == OpCodes.Call || instruction.OpCode == OpCodes.Callvirt)
                 {
-                    var calledMethod = instruction.Operand as GenericInstanceMethod;
-
-                    if (calledMethod != null && calledMethod.Name == methodToFind.Name)
+                    if (instruction.Operand is GenericInstanceMethod calledMethod && calledMethod.Name == methodToFind.Name)
                     {
                         var arg = calledMethod.GenericArguments.First();
                         result.Add(new TypeUsage(arg.ConvertToSystemType(), callingType.ConvertToSystemType(), callingMethod));

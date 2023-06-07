@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Dant.AspNetDependencyValidator.Validation.ValidationLogic;
 using Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder;
+using Dant.AspNetDependencyValidator.Extensions;
 
 namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
 {
@@ -71,13 +72,17 @@ namespace Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Single(m => m.ContainsGenericParameters && m.Name == methodName);
 
-            var usages = _assembliesToValidate
+            using var usageFinders = _assembliesToValidate
                 .Select(a => new GenericTypesUsageFinder(a.Location))
+                .ToDisposableArray();
+
+            var usages = usageFinders
                 .SelectMany(f => f.FindUsedByMethodGenericTypes(method));
 
             var requiredTypes = usages
                 .Select(u => u.UsedType)
-                .Distinct();
+                .Distinct()
+                .ToArray();
 
             Validations.Add(v => v.ValidateServices(requiredTypes));
             return this;

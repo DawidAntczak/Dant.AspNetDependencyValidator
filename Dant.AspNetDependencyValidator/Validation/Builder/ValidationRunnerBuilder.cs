@@ -11,10 +11,10 @@ namespace Dant.AspNetDependencyValidator.Builder
         : IAddAssembliesBuildStage, IAddValidationsBuildStage, IAddAssumedExistingTypesStage, IFinishStage
         where TEntryPoint : class
     {
-        private readonly List<Assembly> _assemblies = new List<Assembly> { typeof(TEntryPoint).Assembly };
-        private readonly List<Action<Validator>> _validations = new List<Action<Validator>>();
+        private readonly List<Assembly> _assemblies = new() { typeof(TEntryPoint).Assembly };
+        private readonly List<Action<Validator>> _validations = new();
         private bool _onBuildValidation = false;
-        private readonly HashSet<Type> _assumedExistingTypes = new HashSet<Type>();
+        private readonly HashSet<Type> _assumedExistingTypes = new();
 
         internal ValidationRunnerBuilder() { }
 

@@ -24,7 +24,7 @@ namespace Dant.AspNetDependencyValidator.Validation
         public ValidationResult Run()
         {
             ValidationResult validationResult = null;
-            using (var app = new WebApplicationFactory<TEntryPoint>()
+            using var app = new WebApplicationFactory<TEntryPoint>()
                 .WithWebHostBuilder(builder =>
                 {
                     builder.ConfigureTestServices(serviceCollection =>
@@ -44,12 +44,8 @@ namespace Dant.AspNetDependencyValidator.Validation
                         options.ValidateOnBuild = _onBuildValidation;
 #endif
                     });
-                }))
-            {
-                using (var client = app.CreateClient())
-                {
-                }
-            }
+                });
+            using var client = app.CreateClient();
             return validationResult;
         }
     }

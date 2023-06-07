@@ -61,8 +61,9 @@ public class DependencyTests
             .ForEntryAssembly<WeatherForecast>()
             .WithAdditional(assemblies => assemblies
                 .Including(typeof(ServiceCollectionExtensions).Assembly))
-            .WithValidation(validations => validations
-                .Controllers())
+            .WithValidation(including => including
+                .Controllers()
+                .GetRequiredServiceCalls())
             .Build()
             .Run();
 
