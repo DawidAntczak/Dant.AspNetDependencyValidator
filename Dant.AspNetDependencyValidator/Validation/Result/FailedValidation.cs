@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Dant.AspNetDependencyValidator
+namespace Dant.AspNetDependencyValidator.Validation.Result
 {
     public sealed class FailedValidation
     {
@@ -18,8 +18,9 @@ namespace Dant.AspNetDependencyValidator
         public override bool Equals(object obj)
         {
             if (obj is FailedValidation fv)
+            {
                 return ServiceType == fv.ServiceType && Message == fv.Message && IssueType == fv.IssueType;
-
+            }
             return false;
         }
 

@@ -8,7 +8,13 @@ public class DependencyTest
     [Test]
     public void ValidatePublicApiProjectDependencies()
     {
-        var result = AspNetDependenciesValidator.Validate<Microsoft.eShopWeb.PublicApi.MappingProfile>();
+        var result = ServiceCollectionValidator
+            .ForEntryAssembly<Microsoft.eShopWeb.PublicApi.MappingProfile>()
+            .WithValidation(including => including
+                .Controllers()
+                .GetRequiredServiceCalls())
+            .Build()
+            .Run();
 
         Console.WriteLine(result);
         Assert.That(result.IsValid, Is.True, result.ToString());
@@ -17,7 +23,14 @@ public class DependencyTest
     [Test]
     public void ValidateWebProjectDependencies()
     {
-        var result = AspNetDependenciesValidator.Validate<Microsoft.eShopWeb.Web.SlugifyParameterTransformer>();
+        var result = ServiceCollectionValidator
+            .ForEntryAssembly<Microsoft.eShopWeb.Web.SlugifyParameterTransformer>()
+            .WithValidation(including => including
+                .Controllers()
+                .GetRequiredServiceCalls())
+            .Build()
+            .Run();
+
         Console.WriteLine(result);
         Assert.That(result.IsValid, Is.True, result.ToString());
     }

@@ -1,4 +1,4 @@
-﻿namespace Dant.AspNetDependencyValidator
+﻿namespace Dant.AspNetDependencyValidator.Validation.Result
 {
     public enum IssueType
     {

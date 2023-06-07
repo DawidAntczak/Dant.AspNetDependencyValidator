@@ -5,13 +5,13 @@ using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Dant.AspNetDependencyValidator.CallsFinding
+namespace Dant.AspNetDependencyValidator.CodeAnalysis.CallRoutes
 {
-    internal sealed class MethodCallsFinder : IDisposable
+    internal sealed class MethodCallRoutesFinder : IDisposable
     {
         private readonly AssemblyDefinition _assembly;
 
-        public MethodCallsFinder(string assemblyLocation)
+        public MethodCallRoutesFinder(string assemblyLocation)
         {
             _assembly = AssemblyDefinition.ReadAssembly(assemblyLocation);
         }

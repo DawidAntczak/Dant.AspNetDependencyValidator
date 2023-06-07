@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text;
 
-namespace Dant.AspNetDependencyValidator
+namespace Dant.AspNetDependencyValidator.Validation.Result
 {
     public sealed class ValidationResult
     {

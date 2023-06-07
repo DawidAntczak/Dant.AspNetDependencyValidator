@@ -2,7 +2,7 @@
 using System.Linq;
 using Mono.Cecil;
 
-namespace Dant.AspNetDependencyValidator.CallsFinding
+namespace Dant.AspNetDependencyValidator.CodeAnalysis.GenericTypeUsage
 {
     internal static class TypeReferenceExtensions
     {

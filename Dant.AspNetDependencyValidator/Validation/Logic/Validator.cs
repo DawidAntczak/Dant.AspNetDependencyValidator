@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Dant.AspNetDependencyValidator.Validation.Result;
 
-namespace Dant.AspNetDependencyValidator.Validation
+namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
 {
-    internal sealed class ServiceCollectionValidator
+    internal sealed class Validator
     {
         public HashSet<FailedValidation> FailedValidations { get; set; } = new HashSet<FailedValidation>();
 
@@ -24,10 +25,10 @@ namespace Dant.AspNetDependencyValidator.Validation
             typeof(ILogger)
         };
 
-        public ServiceCollectionValidator(IServiceCollection serviceCollection, IEnumerable<Type> assumedExistingTypes)
+        public Validator(IServiceCollection serviceCollection, IEnumerable<Type> assumedExistingTypes)
         {
             _registeredServices = serviceCollection.ToList();
-            foreach(var type in assumedExistingTypes)
+            foreach (var type in assumedExistingTypes)
             {
                 _assumedExistingTypes.Add(type);
             }

@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Dant.AspNetDependencyValidator.CodeAnalysis.GenericTypeUsage;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-namespace Dant.AspNetDependencyValidator.CallsFinding
+namespace Dant.AspNetDependencyValidator.CodeAnalysis.UsageFinder
 {
     internal sealed class GenericTypesUsageFinder : IDisposable
     {
@@ -28,7 +29,7 @@ namespace Dant.AspNetDependencyValidator.CallsFinding
 
             var methodToBeFoundRef = _assembly.MainModule.ImportReference(methodWithGenericParameter);
 
-            if (methodToBeFoundRef.GenericParameters.Count >1)
+            if (methodToBeFoundRef.GenericParameters.Count > 1)
                 throw new ArgumentException("Method contains more than one generic parameter", nameof(methodWithGenericParameter));
 
             var callsStacksToMethod = new List<TypeUsage>();
