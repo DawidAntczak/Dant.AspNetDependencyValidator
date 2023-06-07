@@ -8,7 +8,7 @@ using Dant.AspNetDependencyValidator.Validation.Builder.AddAssembliesStage;
 namespace Dant.AspNetDependencyValidator.Builder
 {
     internal sealed class ValidationRunnerBuilder<TEntryPoint>
-        : IAddAssembliesBuildStage, IAddValidationsBuildStage, IAddAssumedExistingTypesStage, IFinishStage
+        : IAddAssembliesBuildStage, IAddValidationsBuildStage, IAddAssumedExistingServicesStage, IFinishStage
         where TEntryPoint : class
     {
         private readonly List<Assembly> _assemblies = new() { typeof(TEntryPoint).Assembly };
@@ -26,11 +26,12 @@ namespace Dant.AspNetDependencyValidator.Builder
             return this;
         }
 
-        public IAddAssumedExistingTypesStage WithValidation(Func<IValidationCollectionBuilder, IValidationCollectionBuilder> validations)
+        public IAddAssumedExistingServicesStage WithValidation(Func<IValidationCollectionBuilder, IValidationCollectionBuilder> validations)
         {
             var builder = new ValidationCollectionBuilder(typeof(TEntryPoint).Assembly, _assemblies);
             validations(builder);
             _validations.AddRange(builder.Validations);
+            _onBuildValidation = builder.OnBuildValidation;
             return this;
         }
 

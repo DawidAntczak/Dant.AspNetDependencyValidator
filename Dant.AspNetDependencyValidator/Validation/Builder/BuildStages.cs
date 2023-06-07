@@ -11,10 +11,10 @@ namespace Dant.AspNetDependencyValidator.Builder
 
     public interface IAddValidationsBuildStage
     {
-        IAddAssumedExistingTypesStage WithValidation(Func<IValidationCollectionBuilder, IValidationCollectionBuilder> including);
+        IAddAssumedExistingServicesStage WithValidation(Func<IValidationCollectionBuilder, IValidationCollectionBuilder> including);
     }
 
-    public interface IAddAssumedExistingTypesStage : IFinishStage
+    public interface IAddAssumedExistingServicesStage : IFinishStage
     {
         IFinishStage AssumingExistenceOf(Func<IAssumedServiceCollectionBuilder, IAssumedServiceCollectionBuilder> services);
     }
