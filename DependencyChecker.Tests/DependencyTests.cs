@@ -11,6 +11,20 @@ namespace DependencyChecker.Tests;
 public class DependencyTests
 {
     [Test]
+    public void ValidatePagesDependencies()
+    {
+        var result = ServiceCollectionValidator
+            .ForEntryAssembly<WeatherForecast>()
+            .WithValidation(including => including
+                .Pages())
+            .Build()
+            .Run();
+
+        Console.WriteLine(result);
+        Assert.That(result.IsValid, Is.True, result.ToString());
+    }
+
+    [Test]
     public void ValidateDependencies()
     {
         var result = ServiceCollectionValidator
@@ -21,7 +35,7 @@ public class DependencyTests
             .Run();
 
         Console.WriteLine(result);
-        Assert.That(result.IsValid, Is.True);
+        Assert.That(result.IsValid, Is.True, result.ToString());
     }
 
     [Test]
@@ -35,7 +49,7 @@ public class DependencyTests
             .Run();
 
         Console.WriteLine(result);
-        Assert.That(result.IsValid, Is.True);
+        Assert.That(result.IsValid, Is.True, result.ToString());
     }
 
     [Test]
@@ -51,7 +65,7 @@ public class DependencyTests
             .Run();
 
         Console.WriteLine(result);
-        Assert.That(result.IsValid, Is.True);
+        Assert.That(result.IsValid, Is.True, result.ToString());
     }
 
     [Test]

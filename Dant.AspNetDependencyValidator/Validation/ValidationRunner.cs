@@ -11,13 +11,13 @@ namespace Dant.AspNetDependencyValidator.Validation
     internal class ValidationRunner<TEntryPoint> : IValidationRunner where TEntryPoint : class
     {
         private readonly IEnumerable<Action<Validator>> _validations;
-        private readonly bool _onBuildValidation;
+        private readonly bool _throwBuildErrors;
         private readonly HashSet<Type> _assumedExistingTypes;
 
         public ValidationRunner(IEnumerable<Action<Validator>> validations, bool onBuildValidation, HashSet<Type> assumedExistingTypes)
         {
             _validations = validations;
-            _onBuildValidation = onBuildValidation;
+            _throwBuildErrors = onBuildValidation;
             _assumedExistingTypes = assumedExistingTypes;
         }
 
@@ -39,13 +39,19 @@ namespace Dant.AspNetDependencyValidator.Validation
 
                     builder.UseDefaultServiceProvider(options =>
                     {
-                        options.ValidateScopes = _onBuildValidation;
+                        options.ValidateScopes = true;
 #if NETCOREAPP3_1_OR_GREATER
-                        options.ValidateOnBuild = _onBuildValidation;
+                        options.ValidateOnBuild = true;
 #endif
                     });
                 });
-            using var client = app.CreateClient();
+            try
+            {
+                using var client = app.CreateClient();
+            }
+            catch (Exception) when (!_throwBuildErrors)
+            {
+            }
             return validationResult;
         }
     }

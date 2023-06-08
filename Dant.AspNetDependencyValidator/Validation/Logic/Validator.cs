@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Dant.AspNetDependencyValidator.Validation.Result;
+using Microsoft.AspNetCore.Http;
 
 namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
 {
@@ -22,7 +23,8 @@ namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
         {
             typeof(IServiceProvider),
             typeof(IServiceScopeFactory),
-            typeof(ILogger)
+            typeof(ILogger),
+            typeof(RequestDelegate) // injected into middlewares
         };
 
         public Validator(IServiceCollection serviceCollection, IEnumerable<Type> assumedExistingTypes)
@@ -34,26 +36,25 @@ namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
             }
         }
 
-        public void ValidateControllers(Assembly assembly)
+        public void ValidateEntryPoints(IEnumerable<Assembly> assemblies, Type baseTypeOfEntryPoint)
         {
-            var controllers = assembly.GetTypes().Where(x => typeof(ControllerBase).IsAssignableFrom(x));
+            var entryPoints = assemblies.SelectMany(a => a.GetTypes()).Where(x => baseTypeOfEntryPoint.IsAssignableFrom(x));
 
-            foreach (var controller in controllers)
+            foreach (var entryPoint in entryPoints)
             {
-                ValidateServiceInternal(new Type[] { controller }, new ServiceDescriptor(controller, controller, _controllerLifetime));
-                ValidateEndpoints(controller);
+                ValidateServiceInternal(new Type[] { }, new ServiceDescriptor(entryPoint, entryPoint, _controllerLifetime));
+                ValidateEndpoints(entryPoint);
             }
         }
 
-        public void ValidatePages(Assembly assembly)
+        public void ValidateEntryPoints(IEnumerable<Assembly> assemblies, IEnumerable<Type> exactTypesOfEntryPoints)
         {
-            var basePageClass = Type.GetType("Microsoft.AspNetCore.Mvc.RazorPages.PageModel, Microsoft.AspNetCore.Mvc.RazorPages");
-            var pages = assembly.GetTypes().Where(x => basePageClass.IsAssignableFrom(x));
+            var entryPoints = assemblies.SelectMany(a => a.GetTypes()).Where(x => exactTypesOfEntryPoints.Contains(x));
 
-            foreach (var page in pages)
+            foreach (var entryPoint in entryPoints)
             {
-                ValidateServiceInternal(new Type[] { page }, new ServiceDescriptor(page, page, _controllerLifetime));
-                ValidateEndpoints(page);
+                ValidateServiceInternal(new Type[] { }, new ServiceDescriptor(entryPoint, entryPoint, _controllerLifetime));
+                ValidateEndpoints(entryPoint);
             }
         }
 
@@ -169,9 +170,9 @@ namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
             }
         }
 
-        private void ValidateEndpoints(Type controller)
+        private void ValidateEndpoints(Type endpointType)
         {
-            var endpointMethods = controller.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            var endpointMethods = endpointType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.GetCustomAttributes<HttpMethodAttribute>().Any());
 
             var fromServiceParameters = endpointMethods.SelectMany(x => x.GetParameters())
@@ -179,7 +180,7 @@ namespace Dant.AspNetDependencyValidator.Validation.ValidationLogic
 
             foreach (var parameterInfo in fromServiceParameters)
             {
-                ValidateChildService(new Type[] { controller }, parameterInfo.ParameterType, _controllerLifetime);
+                ValidateChildService(new Type[] { endpointType }, parameterInfo.ParameterType, _controllerLifetime);
             }
         }
     }

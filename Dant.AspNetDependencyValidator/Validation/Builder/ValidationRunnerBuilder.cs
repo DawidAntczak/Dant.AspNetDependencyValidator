@@ -13,12 +13,12 @@ namespace Dant.AspNetDependencyValidator.Builder
     {
         private readonly List<Assembly> _assemblies = new() { typeof(TEntryPoint).Assembly };
         private readonly List<Action<Validator>> _validations = new();
-        private bool _onBuildValidation = false;
+        private bool _throwBuildErrors = false;
         private readonly HashSet<Type> _assumedExistingTypes = new();
 
         internal ValidationRunnerBuilder() { }
 
-        public IAddValidationsBuildStage WithAdditional(Func<IAssemblyCollectionBuilder, IAssemblyCollectionBuilder> assemblies)
+        public IAddValidationsBuildStage WithAdditional(Action<IAssemblyCollectionBuilder> assemblies)
         {
             var builder = new AssemblyCollectionBuilder();
             assemblies(builder);
@@ -26,16 +26,16 @@ namespace Dant.AspNetDependencyValidator.Builder
             return this;
         }
 
-        public IAddAssumedExistingServicesStage WithValidation(Func<IValidationCollectionBuilder, IValidationCollectionBuilder> validations)
+        public IAddAssumedExistingServicesStage WithValidation(Action<IValidationCollectionBuilder> validations)
         {
             var builder = new ValidationCollectionBuilder(typeof(TEntryPoint).Assembly, _assemblies);
             validations(builder);
             _validations.AddRange(builder.Validations);
-            _onBuildValidation = builder.OnBuildValidation;
+            _throwBuildErrors = builder.ThrowBuildErrors;
             return this;
         }
 
-        public IFinishStage AssumingExistenceOf(Func<IAssumedServiceCollectionBuilder, IAssumedServiceCollectionBuilder> services)
+        public IFinishStage AssumingExistenceOf(Action<IAssumedServiceCollectionBuilder> services)
         {
             var builder = new AssumedServiceCollectionBuilder();
             services(builder);
@@ -45,7 +45,7 @@ namespace Dant.AspNetDependencyValidator.Builder
 
         public IValidationRunner Build()
         {
-            return new ValidationRunner<TEntryPoint>(_validations, _onBuildValidation, _assumedExistingTypes);
+            return new ValidationRunner<TEntryPoint>(_validations, _throwBuildErrors, _assumedExistingTypes);
         }
     }
 }
