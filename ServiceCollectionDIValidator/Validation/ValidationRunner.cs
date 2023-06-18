@@ -5,25 +5,24 @@ using ServiceCollectionDIValidator.Validation.ValidationLogic;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using System.Linq;
 
 namespace ServiceCollectionDIValidator.Validation
 {
     internal class ValidationRunner<TEntryPoint> : IValidationRunner where TEntryPoint : class
     {
         private readonly IEnumerable<Action<Validator>> _validations;
-        private readonly bool _throwBuildErrors;
         private readonly HashSet<Type> _assumedExistingTypes;
 
-        public ValidationRunner(IEnumerable<Action<Validator>> validations, bool onBuildValidation, HashSet<Type> assumedExistingTypes)
+        public ValidationRunner(IEnumerable<Action<Validator>> validations, HashSet<Type> assumedExistingTypes)
         {
             _validations = validations;
-            _throwBuildErrors = onBuildValidation;
             _assumedExistingTypes = assumedExistingTypes;
         }
 
         public ValidationResult Run()
         {
-            ValidationResult validationResult = null;
+            HashSet<FailedValidation> failedValidations = null;
             using var app = new WebApplicationFactory<TEntryPoint>()
                 .WithWebHostBuilder(builder =>
                 {
@@ -34,7 +33,7 @@ namespace ServiceCollectionDIValidator.Validation
                         {
                             validation(validator);
                         }
-                        validationResult = new ValidationResult(validator.FailedValidations);
+                        failedValidations = validator.FailedValidations;
                     });
 
                     builder.UseDefaultServiceProvider(options =>
@@ -49,11 +48,16 @@ namespace ServiceCollectionDIValidator.Validation
             {
                 using var client = app.CreateClient();
             }
-            catch (Exception) when (!_throwBuildErrors)
+            catch (Exception e)
             {
+                failedValidations ??= new HashSet<FailedValidation>();
+                failedValidations.Add(new FailedValidation(IssueType.BuildError, typeof(WebApplicationFactory<TEntryPoint>), $"App build failed with exception: {e.Message}"));
             }
-            return validationResult;
+            if (failedValidations == null)
+            {
+                throw new InvalidOperationException("Validation failed, but no failed validations were found.");
+            }
+            return new ValidationResult(failedValidations);
         }
     }
 }
-

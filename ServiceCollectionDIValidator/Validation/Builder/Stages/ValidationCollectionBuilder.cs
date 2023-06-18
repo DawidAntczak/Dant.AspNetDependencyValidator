@@ -24,13 +24,11 @@ namespace ServiceCollectionDIValidator.Validation.Builder.AddAssembliesStage
         ITypesPassedMethodStage TypesPassed();
         IValidationCollectionBuilder TypesPassedToGetRequiredService();
         IValidationCollectionBuilder TypesPassedToGetService();
-        IValidationCollectionBuilder ThrowingOfBuildErrors();
     }
 
     internal sealed class ValidationCollectionBuilder : IValidationCollectionBuilder
     {
         public List<Action<Validator>> Validations { get; } = new List<Action<Validator>>();
-        public bool ThrowBuildErrors { get; private set; } = false;
 
         private readonly IEnumerable<Assembly> _assembliesToValidate;
 
@@ -107,12 +105,6 @@ namespace ServiceCollectionDIValidator.Validation.Builder.AddAssembliesStage
                 .GetMethods(BindingFlags.Public | BindingFlags.Static)
                 .Single(m => m.ContainsGenericParameters && m.Name == "GetService");
             return TypesPassed().To(method).AtPosition(0);
-        }
-
-        public IValidationCollectionBuilder ThrowingOfBuildErrors()
-        {
-            ThrowBuildErrors = true;
-            return this;
         }
 
         /* TODO: Implement

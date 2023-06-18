@@ -13,7 +13,6 @@ namespace ServiceCollectionDIValidator.Builder
     {
         private readonly List<Assembly> _assemblies = new() { typeof(TEntryPoint).Assembly };
         private readonly List<Action<Validator>> _validations = new();
-        private bool _throwBuildErrors = false;
         private readonly HashSet<Type> _assumedExistingTypes = new();
 
         internal ValidationRunnerBuilder() { }
@@ -31,7 +30,6 @@ namespace ServiceCollectionDIValidator.Builder
             var builder = new ValidationCollectionBuilder(_assemblies);
             validations(builder);
             _validations.AddRange(builder.Validations);
-            _throwBuildErrors = builder.ThrowBuildErrors;
             return this;
         }
 
@@ -45,7 +43,7 @@ namespace ServiceCollectionDIValidator.Builder
 
         public IValidationRunner Build()
         {
-            return new ValidationRunner<TEntryPoint>(_validations, _throwBuildErrors, _assumedExistingTypes);
+            return new ValidationRunner<TEntryPoint>(_validations, _assumedExistingTypes);
         }
     }
 }

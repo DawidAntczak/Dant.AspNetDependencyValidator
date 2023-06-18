@@ -11,7 +11,7 @@ namespace ServiceCollectionDIValidator.Validation.Result
 
         internal ValidationResult(IEnumerable<FailedValidation> failedValidations)
         {
-            IsValid = failedValidations.All(x => x.IssueType != IssueType.MissingService);
+            IsValid = failedValidations.All(x => x.IssueType == IssueType.IncosistentLifetime);
             FailedValidations = failedValidations;
         }
 
@@ -19,7 +19,7 @@ namespace ServiceCollectionDIValidator.Validation.Result
         {
             var sb = new StringBuilder();
             sb.AppendLine($"IsValid: {IsValid}");
-            foreach (var failedValidation in FailedValidations.OrderByDescending(v => v.IssueType))
+            foreach (var failedValidation in FailedValidations.OrderBy(v => v.IssueType))
             {
                 sb.Append(failedValidation.IssueType)
                     .Append(": ")
