@@ -7,11 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DependencyChecker.App", "De
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DependencyChecker.Tests", "DependencyChecker.Tests\DependencyChecker.Tests.csproj", "{8C1224A9-DC34-42B1-8CDC-8F3EFF8D3231}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dant.AspNetDependencyValidator", "Dant.AspNetDependencyValidator\Dant.AspNetDependencyValidator.csproj", "{26897198-2717-4C1A-8FD0-949E9B81206D}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "eShopOnWeb\src\Web\Web.csproj", "{098A4134-78E9-4D0D-99F7-24210BE62A2E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eShopOnWeb", "eShopOnWeb", "{089EAF9E-8577-4996-9F57-36377E370AD5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "eShopOnWebExample", "eShopOnWebExample", "{089EAF9E-8577-4996-9F57-36377E370AD5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ApplicationCore", "eShopOnWeb\src\ApplicationCore\ApplicationCore.csproj", "{461ED7BD-C866-4858-83C8-1BB77EB4AC17}"
 EndProject
@@ -25,13 +23,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PublicApi", "eShopOnWeb\src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EShopOnWeb.DependencyTests", "EShopOnWeb.DependencyTests\EShopOnWeb.DependencyTests.csproj", "{48C6AD50-8B47-4E54-B897-EACAB73598BE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dant.AspNetDependencyValidator.Analyzer", "Dant.AspNetDependencyValidator.Analyzer\Dant.AspNetDependencyValidator.Analyzer.csproj", "{170081B1-2DD2-487C-B424-8361DD4BF1DD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DependencyChecker.ExternalLib", "DependencyChecker.ExternalLib\DependencyChecker.ExternalLib.csproj", "{F331404B-1FEE-42DB-B2AF-07E9648634BB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dant.AspNetDependencyValidator.AnalyzerTests", "Dant.AspNetDependencyValidator.AnalyzerTests\Dant.AspNetDependencyValidator.AnalyzerTests.csproj", "{0030F140-5F32-4872-83CC-F34724A8DD33}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DependencyChecker.SharedLib", "DependencyChecker.SharedLib\DependencyChecker.SharedLib.csproj", "{7BFA357C-818F-404D-98AA-376B20644183}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyChecker.ExternalLib", "DependencyChecker.ExternalLib\DependencyChecker.ExternalLib.csproj", "{F331404B-1FEE-42DB-B2AF-07E9648634BB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServiceCollectionDIValidator", "ServiceCollectionDIValidator\ServiceCollectionDIValidator.csproj", "{82838DFC-C056-43AC-A176-E484AB6C7B12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyChecker.SharedLib", "DependencyChecker.SharedLib\DependencyChecker.SharedLib.csproj", "{7BFA357C-818F-404D-98AA-376B20644183}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceCollectionDIValidator.Tests", "ServiceCollectionDIValidator.Tests\ServiceCollectionDIValidator.Tests.csproj", "{91344565-B94D-4B67-AA27-4688880929E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DependencyCheckerExample", "DependencyCheckerExample", "{20860B51-2B3B-4ACB-A03B-768F65DA4C33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,10 +47,6 @@ Global
 		{8C1224A9-DC34-42B1-8CDC-8F3EFF8D3231}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C1224A9-DC34-42B1-8CDC-8F3EFF8D3231}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C1224A9-DC34-42B1-8CDC-8F3EFF8D3231}.Release|Any CPU.Build.0 = Release|Any CPU
-		{26897198-2717-4C1A-8FD0-949E9B81206D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{26897198-2717-4C1A-8FD0-949E9B81206D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{26897198-2717-4C1A-8FD0-949E9B81206D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{26897198-2717-4C1A-8FD0-949E9B81206D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{098A4134-78E9-4D0D-99F7-24210BE62A2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{098A4134-78E9-4D0D-99F7-24210BE62A2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{098A4134-78E9-4D0D-99F7-24210BE62A2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -79,14 +75,6 @@ Global
 		{48C6AD50-8B47-4E54-B897-EACAB73598BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{48C6AD50-8B47-4E54-B897-EACAB73598BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{48C6AD50-8B47-4E54-B897-EACAB73598BE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{170081B1-2DD2-487C-B424-8361DD4BF1DD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0030F140-5F32-4872-83CC-F34724A8DD33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0030F140-5F32-4872-83CC-F34724A8DD33}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0030F140-5F32-4872-83CC-F34724A8DD33}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0030F140-5F32-4872-83CC-F34724A8DD33}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F331404B-1FEE-42DB-B2AF-07E9648634BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -95,17 +83,30 @@ Global
 		{7BFA357C-818F-404D-98AA-376B20644183}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7BFA357C-818F-404D-98AA-376B20644183}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7BFA357C-818F-404D-98AA-376B20644183}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82838DFC-C056-43AC-A176-E484AB6C7B12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82838DFC-C056-43AC-A176-E484AB6C7B12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82838DFC-C056-43AC-A176-E484AB6C7B12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82838DFC-C056-43AC-A176-E484AB6C7B12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{91344565-B94D-4B67-AA27-4688880929E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{91344565-B94D-4B67-AA27-4688880929E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{91344565-B94D-4B67-AA27-4688880929E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{91344565-B94D-4B67-AA27-4688880929E0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{04B667A1-6E1B-4817-8DB5-1FDDB9022C80} = {20860B51-2B3B-4ACB-A03B-768F65DA4C33}
+		{8C1224A9-DC34-42B1-8CDC-8F3EFF8D3231} = {20860B51-2B3B-4ACB-A03B-768F65DA4C33}
 		{098A4134-78E9-4D0D-99F7-24210BE62A2E} = {089EAF9E-8577-4996-9F57-36377E370AD5}
 		{461ED7BD-C866-4858-83C8-1BB77EB4AC17} = {089EAF9E-8577-4996-9F57-36377E370AD5}
 		{1785D674-5877-4150-9FC3-6478F2314A47} = {089EAF9E-8577-4996-9F57-36377E370AD5}
 		{1CE1CB17-EDE9-4B20-AC84-A18C8424226B} = {089EAF9E-8577-4996-9F57-36377E370AD5}
 		{60710248-586B-44E7-B7DC-70BEBC32A00B} = {089EAF9E-8577-4996-9F57-36377E370AD5}
 		{A44FA68D-1CB2-4C6E-A88B-26D4FBDC039D} = {089EAF9E-8577-4996-9F57-36377E370AD5}
+		{48C6AD50-8B47-4E54-B897-EACAB73598BE} = {089EAF9E-8577-4996-9F57-36377E370AD5}
+		{F331404B-1FEE-42DB-B2AF-07E9648634BB} = {20860B51-2B3B-4ACB-A03B-768F65DA4C33}
+		{7BFA357C-818F-404D-98AA-376B20644183} = {20860B51-2B3B-4ACB-A03B-768F65DA4C33}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {318BD932-DB7F-48CB-9474-4506BAAF6F04}

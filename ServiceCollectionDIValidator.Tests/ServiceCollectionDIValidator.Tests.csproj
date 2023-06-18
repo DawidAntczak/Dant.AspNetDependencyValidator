@@ -18,10 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DependencyChecker\DependencyChecker.App.csproj" />
     <ProjectReference Include="..\ServiceCollectionDIValidator\ServiceCollectionDIValidator.csproj" />
-    <ProjectReference Include="..\eShopOnWeb\src\BlazorAdmin\BlazorAdmin.csproj" />
-    <ProjectReference Include="..\eShopOnWeb\src\PublicApi\PublicApi.csproj" />
-    <ProjectReference Include="..\eShopOnWeb\src\Web\Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+    <Folder Include="Validation\" />
   </ItemGroup>
 
 </Project>

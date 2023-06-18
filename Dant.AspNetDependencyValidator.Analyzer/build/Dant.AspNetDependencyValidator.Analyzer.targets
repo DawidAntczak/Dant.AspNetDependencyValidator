@@ -1,7 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<Target Name="DependencyValidationAfterBuild" AfterTargets="Build" Returns="$(TargetPath)">
-		<Message Text="###DEPENDENCY VALIDATOR###" Importance="High" />
-		<ValidationTask AssemblyPath="$(TargetPath)" />
-	</Target>
-</Project>

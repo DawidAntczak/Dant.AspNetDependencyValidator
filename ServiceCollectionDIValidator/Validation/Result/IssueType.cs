@@ -1,0 +1,9 @@
+﻿namespace ServiceCollectionDIValidator.Validation.Result
+{
+    public enum IssueType
+    {
+        MissingService,
+        //EmptyIEnumerable,    not implemented
+        IncosistentLifetime
+    }
+}

@@ -25,12 +25,13 @@ builder.Services.AddScoped<IWeatherService>(provider => new WeatherService(
 builder.Services.AddSingleton<IDiagnostics, ConsoleDiagnostics>();
 builder.Services.AddSingleton<LocationService>();
 
-//builder.Services.AddSingleton<MiddlewaresDependency>();
+builder.Services.AddSingleton<MiddlewaresDependency>();
 
 builder.Services.AddSingleton<ActionFiltersDependency>();
 
 builder.Services.AddSingleton<PagesDependency>();
 builder.Services.AddSingleton<PageFiltersDependency>();
+
 
 builder.Services.RegisterExternalLibDependencies();
 

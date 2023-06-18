@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Dant.AspNetDependencyValidator\Dant.AspNetDependencyValidator.csproj" />
+    <ProjectReference Include="..\ServiceCollectionDIValidator\ServiceCollectionDIValidator.csproj" />
     <ProjectReference Include="..\DependencyChecker\DependencyChecker.App.csproj" />
   </ItemGroup>
 

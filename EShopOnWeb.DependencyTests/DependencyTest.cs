@@ -1,4 +1,4 @@
-﻿using Dant.AspNetDependencyValidator;
+﻿using ServiceCollectionDIValidator;
 
 namespace EShopOnWeb.DependencyTests;
 
@@ -8,7 +8,7 @@ public class DependencyTest
     [Test]
     public void ValidatePublicApiProjectDependencies()
     {
-        var result = ServiceCollectionValidator
+        var result = DIValidator
             .ForEntryAssembly<Microsoft.eShopWeb.PublicApi.MappingProfile>()
             .WithValidation(including => including
                 .Controllers()
@@ -24,8 +24,10 @@ public class DependencyTest
     [Test]
     public void ValidateWebProjectDependencies()
     {
-        var result = ServiceCollectionValidator
+        var result = DIValidator
             .ForEntryAssembly<Microsoft.eShopWeb.Web.SlugifyParameterTransformer>()
+            .WithAdditional(assemblies => assemblies
+                .Including<BlazorAdmin.CustomAuthStateProvider>())
             .WithValidation(including => including
                 .Controllers()
                 .Pages()
