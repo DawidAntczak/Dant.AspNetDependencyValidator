@@ -18,10 +18,12 @@ namespace ServiceCollectionDIValidator.Validation.Result
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"IsValid: {IsValid}");
+            sb.Append("IsValid: ").Append(IsValid).AppendLine();
             foreach (var failedValidation in FailedValidations.OrderBy(v => v.IssueType))
             {
                 sb.Append(failedValidation.IssueType)
+                    .Append(" for ")
+                    .Append(failedValidation.ServiceType)
                     .Append(": ")
                     .AppendLine(failedValidation.Message);
             }

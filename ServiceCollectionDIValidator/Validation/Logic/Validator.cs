@@ -13,7 +13,7 @@ namespace ServiceCollectionDIValidator.Validation.ValidationLogic
 {
     internal sealed class Validator
     {
-        public HashSet<FailedValidation> FailedValidations { get; set; } = new HashSet<FailedValidation>();
+        public ISet<FailedValidation> FailedValidations { get; } = new HashSet<FailedValidation>();
 
         private readonly ServiceLifetime _controllerLifetime = ServiceLifetime.Transient;
         private readonly IEnumerable<ServiceDescriptor> _registeredServices;
@@ -25,7 +25,6 @@ namespace ServiceCollectionDIValidator.Validation.ValidationLogic
             typeof(IServiceScopeFactory),
             typeof(ILogger),
             typeof(RequestDelegate),    // injected into middlewares
-            // get type of Blazored.LocalStorage.ILocalStorageService
             Type.GetType("Blazored.LocalStorage.ILocalStorageService, Blazored.LocalStorage")
         };
 
